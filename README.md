@@ -18,7 +18,7 @@ This course will be taught using Databricks as the primary development platform 
 There are two parts to this course: **technical and social**. These are equally important and the line between them is largely artificial. 
 
 - **The focus of the first half will be technical**. You will design, create, and refine an agent by the midway point of the course. You will explore different low-code and no-code ways of setting them up, and you will gain technical familiarity with how Agents are built.   
-- **The focus of second half will be social/humanistic.** You will still keep working on your project, but our in class attention and readings will shift to considering some of the major debates about the social and humanistic impacts of AI Agents on society and culture. 
+- **The focus of second half will be social/humanistic.** You will still keep working on your project, but our attention will shift to considering some of the major debates about the social and humanistic impacts of AI Agents on society and culture. 
 
 **Notes**: 
 
