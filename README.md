@@ -35,7 +35,7 @@ Labs and examples will be designed with [Databricks free edition](https://www.da
 
 ### Project 
 
-You will build an AI agent and evaluate it. This can be an ‘agentic system’, a workflow (there is a distinction, but it’s too academic to be practical), or a multi-agent supervisor. You will have to invent a problem that is sufficiently atomic to justify using an agent. Agents are not the right tool for every problem. Problems will be due very early in the semester as you will need time to work on designing the right flow. 
+You will build an AI agent and evaluate it. This can be an ‘agentic system’, a workflow (there is a distinction, but it’s too academic to be practical), or a multi-agent supervisor. You will have to invent a problem that is sufficiently complex and yet atomizable to justify using an agent. Agents are not the right tool for every problem. Problems will be due very early in the semester as you will need time to work on designing the right flow. 
 
 A good problem for an agent has these properties:
 
