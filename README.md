@@ -31,7 +31,7 @@ Please use one/some. I don’t care which one, and I don’t expect attribution.
 
 ### Technology
 
-Labs and examples will be designed with [Databricks free edition](https://www.databricks.com/learn/free-edition) and [Langchain](https://smith.langchain.com/o/c7a3c136-90c0-4334-98e9-f4e7cad53f5b). These platforms are **not required.** We are using it because they are great technologies that makes building low-code agents extremely simple. I also work at Databricks and can therefore support you in it. However, if you want to use another platform, you can use anything where you can make an agent. This can be pure python with a Mistral model, Langchain, Anthropic’s Agent Builder, or anything else (don’t worry if you have no idea what any of those things are \- you’ll soon be familiar with the landscape). You can use some of these within Databricks, so it’s really not an ‘either/or’ situation. 
+Labs and examples will be designed with [Databricks free edition](https://www.databricks.com/learn/free-edition) and [Langchain](https://smith.langchain.com). These platforms are **not required.** We are using it because they are great technologies that makes building low-code agents extremely simple. However, if you want to use another platform, you can use anything where you can make an agent. This can be pure python with a Mistral model, Langchain, Anthropic’s Agent Builder, or anything else (don’t worry if you have no idea what any of those things are \- you’ll soon be familiar with the landscape). You can use some of these within Databricks, so it’s really not an ‘either/or’ situation. 
 
 ### Project 
 
