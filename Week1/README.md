@@ -1,5 +1,6 @@
 # Databricks Option
-The lab provided was written by Matthew McCoy for Databricks. Any errata is my own. Please do not distribute this yet as it is not finalized. Without knowing Databricks, this will be challenging. I will provide a video of me going through this lab to fill in some of the gaps. Please do not hesitate to reach out if you encounter any issues. 
+The lab provided was written by Matthew McCoy for Databricks. Any errata is my own. Please do not distribute this yet as it is not finalized. 
+There are some pieces missing from this lab as of 1/27/26 (mostly navigating Databricks, but also explanations about what is happening). Please do not hesitate to reach out if you encounter any issues. 
 1. Add me as a user to your workspace (michelleamcsweeney@gmail.com)
 2. Create your lab in a Shared workspace.
 3. [Download this zip file](https://github.com/michellejm/Agentic_AI_Spring26/blob/main/Week1/Lab1.zip) to your computer.
