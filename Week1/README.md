@@ -2,8 +2,10 @@
 The lab provided was written by Matthew McCoy for Databricks. Any errata is my own. Please do not distribute this yet as it is not finalized. Without knowing Databricks, this will be challenging. I will provide a video of me going through this lab to fill in some of the gaps. Please do not hesitate to reach out if you encounter any issues. 
 1. Add me as a user to your workspace (michelleamcsweeney@gmail.com)
 2. Create your lab in a Shared workspace.
-3. Follow the lab instructions
-4. Email me a link to your Notebook in the shared folder
+3. [Download this zip file](https://github.com/michellejm/Agentic_AI_Spring26/blob/main/Week1/Lab1.zip) to your computer.
+4. Upload all of the files to the same folder location in Databricks 
+5. Follow the lab instructions
+6. Email me a link to your Notebook in the shared folder
    
 
 # Langchain Option
