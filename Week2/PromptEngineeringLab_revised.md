@@ -140,7 +140,7 @@ Keep the task **small and readable**. You will be comparing multiple outputs sid
 
 If you are unsure what to choose, use this:
 
-> Write a short paragraph discussing the ethics of AI agents for a graduate-level audience.
+> Write an essay on the ethics of AI agents. (select your oen audience, tone, position, and length)
 
 ### Constraints for this lab
 
@@ -160,17 +160,21 @@ The goal is to focus on reasoning and structure, not technical syntax.
 
 ## Part 2: The Platform Chat Interface
 
-In this section, you will run your task through the OpenAI Platform Chat interface and observe how the system treats your prompt.
+In this section, you will run your task through the OpenAI Platform Chat interface and observe how the system treats your prompt. It will turn your message into a 'system message'. 
 
 ### Steps
 
 1. Navigate to the [Platform Chat interface:](https://platform.openai.com/chat)
 
-2. Describe your task (or paste the same prompt) into the box below Create a Chat Prompt. Optimize your prompt.
+2. Describe your task (or paste the same prompt) into the box below Create a Chat Prompt. 
 
-3. Review the optimized prompt in the 'System Message' field.
+![](create_message.png)
 
-### Reflection questions (take notes)
+3. Review the optimized prompt in the 'System Message' field (more on message types below). Use the magic pencil if you want to make any changes. 
+
+![](system_message.png)
+
+### Reflection questions
 
 After the response, write brief notes addressing:
 
@@ -183,301 +187,181 @@ After the response, write brief notes addressing:
 These notes will feed directly into your final report.
 
 ---
-[HERE]
+## Part 3: System Messages, User Messages, and Prompt Messages
+
+Modern chat-based LLM interfaces are built on conversations. These are sequences of structured messages with roles. Understanding these message types is essential to control how an LLM interprets your task.
+
+Each message in a conversation has a role:
+
+| Role | What it represents | Purpose |
+|------|------------------|---------|
+| **System** (or Developer) | Instructions to the model about overall behavior | Guides the model’s role, assumptions, tone, output format, and constraints |
+| **User** | The user’s actual prompt or task | Contains the specific question, task, data, or examples you want the model to work with |
+| **Assistant** | The model’s previous response | Includes prior outputs if you’re continuing a conversation |
 
 
-## Part 3: Explore the Fields You Can Modify in the Platform Chat Interface
+### How these roles influence the model
 
-In this section, you will systematically explore the controls available in the OpenAI **Platform Chat interface**. These controls shape *how* the model responds, independent of *what* you ask it to do.
+1. **System Messages**
+   - The highest-priority instructions the model sees.  
+   - They influence every user prompt that follows.  
+   - Typical use:
+     - “You are a helpful expert in X”
+     - “Always output JSON with the following fields”
+     - “Write in an academic tone”
+     - Here's a detailed set of instructions about what I'm trying to accomplish.
+   - *System messages shape the context and guardrails for the model. 
 
-Your goal is not to master every parameter, but to understand:
-- What each control is intended to influence
-- When changing a control meaningfully improves results
-- When better prompting matters more than system-level changes
+2. **User Messages**
+   - These are the actual task description, data, and examples you want solved.
+   - They are more specific than system instructions.
+   - Think of them as the *question you ask*, whereas the system is the *role and rules you set first.*
+
+3. **Prompt Messages**
+   - In the Platform Chat UI, the term “prompt” usually refers to what the user types.
+   - But from a technical view, the *full prompt* is the entire message array: **system + user + any previous assistant messages**.
+   - When doing prompt engineering, we deliberately split high-level guidance (system) from task details (user) to see which influences output most.
+
+## Why This Matters for Agents
+
+An agentic system typically separates functions in a way that mirrors these roles:
+
+- **System messages** act like an agent’s *constitution or policy*  
+  - What the agent is allowed to do  
+  - What goals it serves  
+  - What rules it must follow  
+
+- **User messages** act like *tasks or goals* given to the agent  
+  - What problem to solve  
+  - What decision to make  
+  - What output to produce  
+
+- **Assistant messages** represent the agent’s *state over time*  
+  - Previous reasoning  
+  - Past actions  
+  - Intermediate results  
+
+When an agent plans, acts, evaluates, and loops, it is effectively:
+- Operating under persistent system-level constraints
+- Responding to changing user-level goals
+- Using its own prior outputs as context for future decisions
+
+In other words:
+> **Prompt roles are a simplified version of agent architecture.**
+
+This distinction becomes critical as systems move from single-turn prompts to multi-step, agentic workflows.
+---
+
+## Part 4: Experimenting with Model Controls and Temperature
+
+In the Platform interface, you will see:
+- A way to select a model (e.g., “GPT-4.1”, “o3”, “o1-series”)
+- Parameters
+    - With traditional models: A temperature slider and a Top-p control for randomness and creativity
+    - With reasoning: Reasoning effort
+- An Evaluate button where you can generate multiple outputs for comparison
+
+#### Model Selection
+Different models behave differently:
+- Reasoning-oriented models (like o1, o3) may reason internally and handle structured tasks better
+- ChatGPT models (like GPT-4.1) may be more balanced for general instruction tasks
+
+#### To Do 
+Select two different models and run the *same prompt* through each to compare:
+- Output quality
+- Fidelity to constraints (format, length, content)
+- Erroneous or hallucinated information
+
+Record observations.
+
+#### Temperature
+- **Low temperature (e.g., 0.0–0.2)** → more deterministic, focused, factual outputs  
+- **Higher temperature (e.g., 0.7–1.0)** → more creative, varied outputs  
+You can adjust this via the UI slider before running the prompt.
+
+**To Do**
+- Run each prompt with **temperature = 0.1** and **temperature = 1.2**
+- Compare:
+  - Does the model stay on topic more with low temperature?
+  - Does it introduce imaginative or wrong answers with higher temperature?
 
 ---
 
-### Steps
-1. Using the 
+## Part 5: Evaluate and Compare Outputs
 
-### A. Model Selection
+Take a moment to note the difference between changing the model and changing the temperature/top P, keeping in mind that changing the model changes the structure and training of the model itself. Changing the parameters (temperature/top P) just modifies the output by adjusting the probability of the next word.
 
-**What it is**  
-The model selector determines which underlying model generates the response.
-
-**Why it matters**  
-Different models are optimized for different tradeoffs:
-- Speed vs. depth
-- General instruction-following vs. explicit reasoning
-- Conciseness vs. elaboration
-
-Some models are explicitly tuned to perform additional internal reasoning before producing an answer.
-
-**What to do**
-- Run your prompt using one reasoning-oriented model (the o-models) and one general chat model (a mini is a good choice).
-- Keep everything else constant.
-
-**Notes to record**
-- Which model produced clearer structure?
-- Which model followed constraints more reliably?
-- Did one model hallucinate or overgeneralize more than the other?
+Reasoning models are fine tuned for reasoning tasks. Reasoning models are key to effective agents.
 
 ---
 
-### B. Reasoning Effort (or Equivalent Control)
+## Part 6 OPTIONAL: Structured Prompt Variants
 
-**What it is**  
-A control that determines how much internal reasoning the model performs before producing its final answer.
+You will now evolve one prompt through three variants (this is very relevant to effectively using LLMs, not directly relevant to Agents):
 
-**Why it matters**  
-Increasing reasoning effort gives the model more “thinking budget.” This can improve performance on:
-- Multi-step reasoning
-- Planning and synthesis
-- Constraint satisfaction
+### 1) System-Heavy Prompt
+- Put *as much guidance as possible* into the **System / Developer Message**
+- Keep the user message short (e.g., “Write a 200-word paragraph on X”)
 
-However, higher reasoning effort can also lead to:
-- Longer responses
-- Over-explaining
-- Diminishing returns for simple tasks
+**Purpose**
+Test whether *changing the role context* shifts the model’s behavior without altering the user content.
 
-**What to do**
-- Run the *same prompt* twice:
-  - Once with **low reasoning effort**
-  - Once with **high reasoning effort**
+### 2) User-Heavy Prompt
+- Put *most guidance in the user message*
+- Keep the system message minimal (e.g., just “You are an expert assistant”)
 
-**Notes to record**
-- Did accuracy improve?
-- Did verbosity increase?
-- Did the structure improve, or just the length?
+**Purpose**
+Test whether task details matter more when placed in lower-priority positions.
 
-> Important: Reasoning effort affects **internal processing**, not whether the model *shows* its reasoning. That is controlled by your prompt.
+### 3) Split Prompt (System + User)
+- Place high-level rules in the System
+- Place task details in User
 
----
+**Purpose**
+This is often best practice: general rules in System, specifics in User.
 
-### C. Prompt Optimizer
-
-**What it is**  
-A tool that rewrites your prompt according to best practices: clarifying roles, constraints, formatting, and intent.
-
-**Why it matters**  
-The optimizer often reveals *implicit assumptions* in your original prompt by making them explicit.
-
-**What to do**
-- Compare your original prompt to the optimized version line by line.
-
-**Notes to record**
-- What sections were added (e.g., role, task, output format)?
-- Were constraints made more explicit?
-- Did the optimizer subtly change the task’s meaning?
+Compare these three across:
+- Models
+- Temperature settings
+- Evaluate runs
 
 ---
 
-### D. Output Format Controls (When Present)
+## Part 7: Reasoning Effort vs. Prompt Engineering
 
-**What it is**  
-Some interfaces allow you to specify or constrain the format of the response.
+**To Do:**
 
-**Why it matters**  
-Structured outputs:
-- Are easier to compare across runs
-- Reduce ambiguity
-- Are critical in agent pipelines
+Use your best performing prompt, select a reasoning model, and run it with:
+- **Low reasoning effort**
+- **High reasoning effort**
 
-**What to do**
-- Enforce a consistent format (e.g., bullets + paragraph) across multiple runs.
+Keep everything else constant.
 
-**Notes to record**
-- Did formatting constraints reduce errors?
-- Did the model ever violate the format?
+Write a short comparison answering:
+- Did reasoning effort improve accuracy?
+- Did improved prompt structure reduce dependency on heavy reasoning?
+- Which combination was most reliable for your task?
 
----
-
-### E. Sampling Controls (Temperature, Top-p) (Optional)
-
-**What they are**  
-Controls that affect randomness and variability in generation.
-
-**Why they matter**  
-- Lower randomness → more consistency
-- Higher randomness → more creativity (and sometimes more errors)
-
-**What to do (only if available)**
-- Run your prompt with:
-  - Low temperature (≈0.2)
-  - Higher temperature (≈0.8)
-
-**Notes to record**
-- Did creativity increase?
-- Did factual accuracy change?
-- Was the output still usable?
+This part connects **system message design** with **model-internal reasoning**—a key distinction in agentic AI.
 
 ---
 
-## Part 4: From Zero-Shot to Chain-of-Thought-Style Prompting
+## Part 8: Submission
 
-In this section, you will evolve *the same task* across three prompting styles.
+Have an LLM convert your notes into a User Feedback Report. Email it to me at:
 
-Keep the **model** and **reasoning effort** constant for all three runs.
+michellamcsweeney@gmail.com
 
----
-
-### Run 1: Zero-Shot Prompt (Baseline)
-
-Use your original prompt from Part 1 with no additional structure.
-
-**Notes to record**
-- Did it follow instructions?
-- Did it miss key points?
-- Was the output coherent and on-topic?
-
----
-
-### Run 2: Structured Zero-Shot Prompt
-
-Revise your prompt to include explicit constraints, but **no reasoning steps**.
-
-Add:
-- Audience
-- Length
-- Tone
-- Required components
-- Output format
-
-Example additions:
-- Audience: first-year graduate students
-- Length: 250–300 words
-- Must include: definition, example, counterargument
-- Format: bullet points + short conclusion paragraph
-
-**Why this matters**  
-This tests whether improvements come from clearer instructions *without* invoking reasoning explicitly.
-
-**Notes to record**
-- Did structure improve?
-- Did omissions decrease?
-- Did the model still make reasoning errors?
-
----
-
-### Run 3: Chain-of-Thought-*Style* Prompt
-
-Now revise the prompt again to request an explicit *process* before the final output.
-
-Add the following two instructions at the end of your prompt:
-
-1. “Before writing the final answer, write a short plan (3–6 bullet points) describing your approach.”
-2. “Then write the final answer in the required format.”
-
-**Notes to record**
-- Did the plan improve the final answer?
-- Did errors decrease or simply become better explained?
-- Was the final output more coherent?
-
-> Reminder: You are testing **visible reasoning structure**, not internal reasoning effort.
-
----
-
-## Part 5: Reasoning Effort vs. Prompt Structure
-
-Now isolate the role of **model-side reasoning**.
-
-Use your *best prompt* from Part 4 (usually Run 2 or Run 3).
-
-### Runs
-- Run A: Low reasoning effort
-- Run B: High reasoning effort
-
-Do not change the prompt.
-
-**Notes to record**
-- Which version was more accurate?
-- Which followed constraints better?
-- Which would you trust in an automated agent?
-
----
-
-## Part 6: Synthesis and Reflection
-
-Answer the following in complete sentences (these will go into your final report):
-
-1. For your task, what mattered more: better prompting or higher reasoning effort? Why?
-2. Did explicit planning in the prompt help even when reasoning effort was low?
-3. Where did you see diminishing returns?
-4. How would your conclusions change for a more complex task?
-
----
-
-## Optional Extension: Agentic Framing
-
-Take your best-performing prompt and add the following agent-style constraints:
-
-- “Ask up to two clarifying questions if needed.”
-- “Produce the output.”
-- “Include a self-check section verifying all constraints were met.”
-
-**Reflection**
-- How does this resemble an agent loop (plan → act → evaluate)?
-- Where might this fail without external tools?
-
----
-
-## Final Deliverable: User Feedback Report
-
-Email your report to:  
-**michellamcsweeney@gmail.com**
-
-### Format
-- Google Doc link **or** PDF
-- Subject line:  
-  **Prompt Engineering Lab — User Feedback Report — Your Name**
-
-### Required Sections
-
-1. Task description (1–2 sentences)  
-2. Original zero-shot prompt (paste)  
-3. Prompt optimizer observations  
-4. Results summary for Runs 1–3  
-5. Reasoning effort comparison  
-6. Final conclusions  
-7. One improvement you would add for deployment in an agent
-
----
-
-## Closing Note
-
-This lab is not about finding the “best” prompt.
-
-It is about learning to see **where intelligence is coming from**:
-- Your instructions
-- The model’s reasoning budget
-- Or the interaction between the two
-
-That distinction is foundational for understanding—and designing—agentic AI systems.
+### Sections to include
+1) Task description  
+2) System vs User prompt versions  
+3) Evaluation settings used (model, temperature, reasoning effort)  
+4) Results summary (Compare outputs)  
+5) Reflections on:
+   - System vs User messages
+   - Model differences
+   - Temperature effects
+6) Final conclusions  
 
 
----
 
-## Submission Instructions
-
-Email your completed **User Feedback Report** to:
-
-**michellamcsweeney@gmail.com**
-
-- Format: Google Doc link **or** PDF
-- Subject line:  
-  **Prompt Engineering Lab — User Feedback Report — Your Name**
-
-Detailed submission requirements and the report template are provided at the end of the lab.
-
----
-
-## What to Keep in Mind
-
-This lab is not about finding the “best” prompt.
-
-It is about learning to answer:
-- *Why* did this version work better?
-- *Where* did the improvement come from?
-- *When* should you rely on prompting versus model-side reasoning?
-
-These distinctions are foundational for understanding **agentic AI systems**, where prompting is not a one-time
