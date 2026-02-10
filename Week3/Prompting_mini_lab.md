@@ -18,10 +18,8 @@ Passcode: Sx#%3$1y
 5. Prompt it with the start of a sentence
 6. Select an Instruction-tuned one and prompt it with the same prompt pair.
 7. Feel free to check for bias (i.e., with gendered names, occupations, etc.)
-
-This part is not in the video
-9. Now find a Reasoning Model [this is a good option](https://huggingface.co/zai-org/GLM-4.7-Flash?inference_provider=novita)
-10. Prompt it with the same instruction you used above. 
+8. Now find a Reasoning Model [this is a good option](https://huggingface.co/zai-org/GLM-4.7-Flash?inference_provider=novita)
+9. Prompt it with the same instruction you used above. 
 11. When it finishes generating a response, there should be a box at the top of the response that says 'Reasoning'. Open that
 12. Inspect the reasoning traces. What do you notice? Really read through all of the steps - how did it break down this task? Is it how you would have broken it down?
 13. Add the model, prompt, result, and a new column for reasoning traces. 
