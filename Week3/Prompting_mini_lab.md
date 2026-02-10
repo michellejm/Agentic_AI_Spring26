@@ -11,6 +11,8 @@ A document or spreadsheet with your observations. This doesn't have to be detail
 [video of how to navigage HF](https://gc-cuny-edu.zoom.us/rec/share/NWkuuCoeJS0B4YYzlYtWZUFjxDEv1VFD1-lkQHlEhF9dyuoqErX24nJSUNsbBHP0.WFbwphmvzfK4aeHv?startTime=1770691807000)
 Passcode: Sx#%3$1y
 
+Note the video only includes up to step 6
+
 1. Set up an account with and [Log in to huggingface](https://huggingface.co/)
 2. Search for the llama models
 3. Select a base (not Instruct) model
