@@ -11,7 +11,7 @@ A document or spreadsheet with your observations. This doesn't have to be detail
 [video of how to navigage HF](https://gc-cuny-edu.zoom.us/rec/share/NWkuuCoeJS0B4YYzlYtWZUFjxDEv1VFD1-lkQHlEhF9dyuoqErX24nJSUNsbBHP0.WFbwphmvzfK4aeHv?startTime=1770691807000)
 Passcode: Sx#%3$1y
 
-Note the video only includes up to step 6
+Note the video only includes up to step 6. However, you will need Steps 8 & beyond for the next lab.
 
 1. Set up an account with and [Log in to huggingface](https://huggingface.co/)
 2. Search for the llama models
@@ -25,7 +25,14 @@ Note the video only includes up to step 6
 11. When it finishes generating a response, there should be a box at the top of the response that says 'Reasoning'. Open that
 12. Inspect the reasoning traces. What do you notice? Really read through all of the steps - how did it break down this task? Is it how you would have broken it down?
 13. Add the model, prompt, result, and a new column for reasoning traces. 
-14. What happens if you give it a different task? 
+14. What happens if you give it a different task?
+
+## Reasoning 
+1. Now that you have a sense of what reasoning looks like, let's switch to a Frontier model such as ChatGPT, Claude, Gemini, Perplexity, or whatever you prefer.
+2. Make sure that reasoning is turned on.
+3. Input the same prompt you used with the reasoning model above.
+4. Inspect the reasoning traces. What do you notice about how this model broke down the problem? More specific? Less? About the same?
+5. Do this as many times as needed until you feel like you have a sense of how Reasoning models break down tasks. 
 
 
 
