@@ -2,5 +2,6 @@
 
 
 ### Recording
-https://gc-cuny-edu.zoom.us/rec/share/tPd9tMAuFeGQK4uS1oToKjT_kpzBkPIlwQ6URkhlKygD0ENCkdZQFeqlpBa9YEzf.2aprWTz_T3_3lhJP?startTime=1769916870000
-Passcode: AsXJx1#.
+[https://gc-cuny-edu.zoom.us/rec/share/tPd9tMAuFeGQK4uS1oToKjT_kpzBkPIlwQ6URkhlKygD0ENCkdZQFeqlpBa9YEzf.2aprWTz_T3_3lhJP?startTime=1769916870000
+Passcode: AsXJx1#.](https://gc-cuny-edu.zoom.us/rec/share/GJXOBvsBE1AYYMFOjQgjuaYXj3-yo79_yFVl-fUlzgfRRo9-N-pLUlQIroh_fi2Q.jQIumCKy1tvDP2zC?startTime=1770247477000
+Passcode: 0d0v^sqx)
