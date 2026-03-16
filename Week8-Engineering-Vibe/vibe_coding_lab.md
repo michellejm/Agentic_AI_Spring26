@@ -6,8 +6,8 @@
 
 ## Objective
 
-* Experience "vibe coding" — using an LLM to write functional code through iterative prompting, without writing the code yourself.
-* Build a word-frequency visualization from a text of your choice.
+* Experience "vibe coding" — use an LLM to write functional code through iterative prompting, **without writing the code yourself**.
+* Build a word-frequency visualization from a text of your choice (or pick another project).
 * Develop a record of your prompting decisions and reasoning.
 
 ---
