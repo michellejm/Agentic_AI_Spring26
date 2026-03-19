@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Flow Explorer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+header {
+  padding: 10px 20px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+header h1 { font-size: 0.95rem; color: #89b4fa; font-weight: 600; }
+header p { font-size: 0.72rem; color: #6c7086; margin-top: 2px; }
+
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── LEFT PANEL ── */
+.diagram-panel {
+  width: 260px;
+  flex-shrink: 0;
+  background: #181825;
+  border-right: 1px solid #313244;
+  padding: 16px 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.panel-label {
+  font-size: 0.65rem;
+  color: #6c7086;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 14px;
+  align-self: flex-start;
+}
+.flow-node {
+  width: 230px;
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1.5px solid #45475a;
+  background: #1e1e2e;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.flow-node:hover, .flow-node.active {
+  border-color: #89b4fa;
+  background: #283558;
+  box-shadow: 0 0 0 2px rgba(137,180,250,0.2);
+}
+.node-title { font-size: 0.82rem; font-weight: 600; color: #cdd6f4; }
+.node-sub { font-size: 0.68rem; color: #6c7086; margin-top: 2px; }
+.node-lines { font-size: 0.62rem; color: #89b4fa; margin-top: 3px; font-family: monospace; }
+.tool-chips { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; margin-top: 5px; }
+.chip {
+  font-size: 0.6rem; color: #f38ba8;
+  background: rgba(243,139,168,0.1);
+  border: 1px solid rgba(243,139,168,0.3);
+  border-radius: 3px; padding: 1px 5px; font-family: monospace;
+}
+.loop-badge {
+  font-size: 0.6rem; color: #a6e3a1;
+  background: rgba(166,227,161,0.1);
+  border: 1px solid rgba(166,227,161,0.3);
+  border-radius: 10px; padding: 1px 7px; margin-top: 4px; display: inline-block;
+}
+.arrow {
+  width: 2px; height: 20px;
+  background: #45475a;
+  margin: 0 auto;
+  position: relative;
+}
+.arrow::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: -4px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #45475a;
+}
+
+/* ── RIGHT PANEL ── */
+.code-panel { flex: 1; overflow: auto; background: #1e1e2e; }
+.code-scroll { padding: 12px 0; min-width: max-content; }
+.code-line {
+  display: flex;
+  align-items: baseline;
+  padding: 0;
+  cursor: pointer;
+  font-family: 'Fira Code', 'Cascadia Code', 'Menlo', monospace;
+  font-size: 0.8rem;
+  line-height: 1.65;
+  white-space: pre;
+  transition: background 0.1s;
+}
+.code-line:hover { background: rgba(137,180,250,0.07); }
+.code-line.hi {
+  background: rgba(137,180,250,0.13);
+  border-left: 2px solid #89b4fa;
+}
+.code-line.hi .line-num { padding-right: 14px; }
+.code-line.picked { background: rgba(249,226,175,0.1); }
+.line-num {
+  width: 46px; text-align: right;
+  color: #45475a; padding-right: 16px;
+  user-select: none; flex-shrink: 0; font-size: 0.72rem;
+}
+.line-content { padding-left: 8px; flex: 1; border-left: 1px solid #2a2a3e; color: #cdd6f4; }
+
+/* ── POPUP ── */
+.popup {
+  position: fixed;
+  background: #313244;
+  border: 1px solid #89b4fa;
+  border-radius: 8px;
+  padding: 12px 36px 12px 14px;
+  max-width: 420px;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #cdd6f4;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: none;
+}
+.popup.on { display: block; }
+.popup-code {
+  font-family: monospace; font-size: 0.72rem;
+  color: #89b4fa; background: #1e1e2e;
+  padding: 3px 7px; border-radius: 4px;
+  margin-bottom: 7px; display: block; word-break: break-all;
+}
+.popup-close {
+  position: absolute; top: 8px; right: 10px;
+  background: none; border: none; color: #6c7086;
+  cursor: pointer; font-size: 1rem; line-height: 1;
+}
+.popup-close:hover { color: #cdd6f4; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>What Did I Work On? — Agent Flow Explorer</h1>
+  <p>Hover a node to highlight code &nbsp;·&nbsp; Click any line of code for an explanation</p>
+</header>
+
+<div class="main">
+
+  <!-- LEFT: diagram -->
+  <div class="diagram-panel">
+    <div class="panel-label">Agent Flow</div>
+
+    <div class="flow-node" data-node="setup">
+      <div class="node-title">⚙️ Setup &amp; Config</div>
+      <div class="node-sub">Imports, globals, CLI args</div>
+      <div class="node-lines">19–33 · 195–211</div>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="flow-node" data-node="tools">
+      <div class="node-title">🔧 Define Tools</div>
+      <div class="node-sub">Functions the agent can call</div>
+      <div class="node-lines">40–110</div>
+      <div class="tool-chips">
+        <span class="chip">list_files</span>
+        <span class="chip">read_file</span>
+        <span class="chip">search_files</span>
+      </div>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="flow-node" data-node="prompt">
+      <div class="node-title">📋 System Prompt</div>
+      <div class="node-sub">Instructions &amp; approach for the LLM</div>
+      <div class="node-lines">117–132</div>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="flow-node" data-node="build">
+      <div class="node-title">🤖 Build Agent</div>
+      <div class="node-sub">LLM + tools → ReAct agent</div>
+      <div class="node-lines">135–141</div>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="flow-node" data-node="loop">
+      <div class="node-title">💬 Chat Loop</div>
+      <div class="node-sub">Read user input, maintain history</div>
+      <div class="node-lines">144–172</div>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="flow-node" data-node="invoke">
+      <div class="node-title">⚡ Agent Invoke</div>
+      <div class="node-sub">Send messages, run ReAct loop</div>
+      <div class="node-lines">173–174</div>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="flow-node" data-node="toolcalls">
+      <div class="node-title">🔄 Tool Execution</div>
+      <div class="node-sub">Agent calls tools, observes results</div>
+      <div class="node-lines">180–183</div>
+      <span class="loop-badge">↕ repeats until answer found</span>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="flow-node" data-node="response">
+      <div class="node-title">💡 Display Response</div>
+      <div class="node-sub">Show answer, update history</div>
+      <div class="node-lines">185–188</div>
+      <span class="loop-badge">↑ back to Chat Loop</span>
+    </div>
+  </div>
+
+  <!-- RIGHT: code -->
+  <div class="code-panel" id="codePanel">
+    <div class="code-scroll" id="codeScroll"></div>
+  </div>
+</div>
+
+<!-- popup -->
+<div class="popup" id="popup">
+  <button class="popup-close" id="popupClose">✕</button>
+  <code class="popup-code" id="popupCode"></code>
+  <div id="popupBody"></div>
+</div>
+
+<!-- raw code stored here; HTML-escape only < > & -->
+<pre id="rawCode" style="display:none">
+"""
+What Did I Work On? — A work history agent built with LangChain.
+
+Scans a folder of emails, calendar entries, and markdown notes, then
+answers questions about your work history using Claude with tool use.
+
+Usage:
+    python agent.py [--data-dir PATH]
+
+Data directory layout (all optional):
+    data/
+        emails/      ← .eml, .txt, .md files
+        calendar/    ← .ics, .txt, .md files
+        notes/       ← .md, .txt files
+
+Set ANTHROPIC_API_KEY in your environment before running.
+"""
+
+import os
+import re
+import glob
+import argparse
+
+from langchain_anthropic import ChatAnthropic
+from langchain_core.tools import tool
+from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.prebuilt import create_react_agent
+
+# ---------------------------------------------------------------------------
+# Data directory (set before tools are defined)
+# ---------------------------------------------------------------------------
+
+DATA_DIR = "data"  # overridden by --data-dir at startup
+
+
+# ---------------------------------------------------------------------------
+# Tools
+# ---------------------------------------------------------------------------
+
+@tool
+def list_files(category: str = "") -&gt; str:
+    """List all work files in the data directory.
+    Use category to narrow to 'emails', 'calendar', or 'notes'.
+    Leave category empty to list everything.
+    """
+    search_path = os.path.join(DATA_DIR, category, "**", "*") if category \
+        else os.path.join(DATA_DIR, "**", "*")
+
+    files = [f for f in glob.glob(search_path, recursive=True) if os.path.isfile(f)]
+    if not files:
+        return f"No files found in {search_path!r}."
+
+    rel = [os.path.relpath(f, DATA_DIR) for f in sorted(files)]
+    return "\n".join(rel)
+
+
+@tool
+def read_file(path: str) -&gt; str:
+    """Read the full contents of a file. Path is relative to the data directory,
+    e.g. 'emails/2024-03-sprint-kickoff.txt'.
+    """
+    abs_path = path if os.path.isabs(path) else os.path.join(DATA_DIR, path)
+
+    # Safety: keep reads inside DATA_DIR
+    real_data = os.path.realpath(DATA_DIR)
+    real_path = os.path.realpath(abs_path)
+    if not real_path.startswith(real_data):
+        return "Error: path is outside the data directory."
+    if not os.path.isfile(real_path):
+        return f"File not found: {path!r}"
+
+    try:
+        with open(real_path, encoding="utf-8", errors="replace") as f:
+            content = f.read()
+        if len(content) &gt; 8000:
+            content = content[:8000] + "\n\n[… truncated …]"
+        return content
+    except Exception as e:
+        return f"Error reading file: {e}"
+
+
+@tool
+def search_files(query: str, category: str = "") -&gt; str:
+    """Search all work files for a keyword or phrase (case-insensitive).
+    Returns up to 50 matching lines with file names and line numbers.
+    Use category to limit search to 'emails', 'calendar', or 'notes'.
+    """
+    search_path = os.path.join(DATA_DIR, category, "**", "*") if category \
+        else os.path.join(DATA_DIR, "**", "*")
+
+    pattern = re.compile(re.escape(query), re.IGNORECASE)
+    matches = []
+
+    for filepath in sorted(glob.glob(search_path, recursive=True)):
+        if not os.path.isfile(filepath):
+            continue
+        try:
+            with open(filepath, encoding="utf-8", errors="replace") as f:
+                for lineno, line in enumerate(f, 1):
+                    if pattern.search(line):
+                        rel = os.path.relpath(filepath, DATA_DIR)
+                        matches.append(f"[{rel}:{lineno}] {line.rstrip()}")
+                        if len(matches) &gt;= 50:
+                            break
+        except Exception:
+            continue
+        if len(matches) &gt;= 50:
+            break
+
+    return "\n".join(matches) if matches else f"No matches found for {query!r}."
+
+
+# ---------------------------------------------------------------------------
+# Agent
+# ---------------------------------------------------------------------------
+
+SYSTEM_PROMPT = """\
+You are a personal work history assistant. The user has stored their emails,
+calendar entries, and markdown notes in a local data directory.
+
+When the user asks a question about their work history (what they worked on,
+meetings they had, projects, deadlines, collaborators, etc.) you MUST use the
+available tools to search through those files before answering. Do not answer
+from memory — always ground your answers in what you actually find in the files.
+
+Approach:
+1. Start with search_files to find relevant content quickly.
+2. Use read_file to read specific files that seem most relevant.
+3. Use list_files if you want an overview of what's available.
+4. Synthesise a clear, concise answer from what you find.
+5. Cite the source file(s) for each piece of information.
+"""
+
+
+def build_agent():
+    llm = ChatAnthropic(model="claude-opus-4-6", max_tokens=4096)
+    return create_react_agent(
+        model=llm,
+        tools=[list_files, read_file, search_files],
+        prompt=SYSTEM_PROMPT,
+    )
+
+
+def chat(data_dir: str) -&gt; None:
+    global DATA_DIR
+    DATA_DIR = data_dir
+
+    agent = build_agent()
+
+    print("=" * 60)
+    print("  What Did I Work On? — Work History Agent")
+    print("=" * 60)
+    print(f"  Data directory: {os.path.abspath(data_dir)}")
+    print("  Type your question, or 'quit' to exit.\n")
+
+    history = []
+
+    while True:
+        try:
+            user_input = input("You: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nGoodbye!")
+            break
+
+        if user_input.lower() in ("quit", "exit", "q"):
+            print("Goodbye!")
+            break
+        if not user_input:
+            continue
+
+        history.append(HumanMessage(content=user_input))
+
+        result = agent.invoke({"messages": history})
+
+        # The agent returns the full updated message list; grab the last AI message
+        all_messages = result["messages"]
+        response = all_messages[-1]
+
+        # Show tool calls as they appear in the trace
+        for msg in all_messages[len(history):]:
+            if hasattr(msg, "tool_calls") and msg.tool_calls:
+                for tc in msg.tool_calls:
+                    print(f"  [tool: {tc['name']}({tc['args']})]")
+
+        print(f"\nAssistant: {response.content}\n")
+
+        # Keep full history for multi-turn context
+        history = all_messages
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Work history agent")
+    parser.add_argument(
+        "--data-dir",
+        default="data",
+        help="Directory containing emails/, calendar/, and notes/ subfolders (default: ./data)",
+    )
+    args = parser.parse_args()
+
+    data_dir = args.data_dir
+    if not os.path.isdir(data_dir):
+        print(f"Creating data directory structure at: {os.path.abspath(data_dir)}")
+        for sub in ("emails", "calendar", "notes"):
+            os.makedirs(os.path.join(data_dir, sub), exist_ok=True)
+        print("Add your files and re-run.\n")
+    else:
+        chat(data_dir)
+</pre>
+
+<script>
+// ── Node → line ranges ──────────────────────────────────────────────────────
+const NODE_RANGES = {
+  setup:     [[19,33],[195,211]],
+  tools:     [[40,110]],
+  prompt:    [[117,132]],
+  build:     [[135,141]],
+  loop:      [[144,172]],
+  invoke:    [[173,174]],
+  toolcalls: [[180,183]],
+  response:  [[185,188]],
+};
+
+// ── Node labels for generic messages ────────────────────────────────────────
+const NODE_LABELS = {
+  setup: 'Setup & Config', tools: 'Define Tools', prompt: 'System Prompt',
+  build: 'Build Agent', loop: 'Chat Loop', invoke: 'Agent Invoke',
+  toolcalls: 'Tool Execution', response: 'Display Response',
+};
+
+// ── Per-line explanations ────────────────────────────────────────────────────
+const EXPL = {
+  1:  { code:'"""', text:'Start of the module docstring. Python ignores this at runtime, but IDEs and <code>help()</code> display it. Describes the script\'s purpose, usage, and expected directory layout.' },
+  19: { code:'import os', text:'Imports Python\'s built-in <strong>os</strong> module, used throughout for path operations: <code>os.path.join</code>, <code>os.path.isfile</code>, <code>os.path.realpath</code>, <code>os.makedirs</code>.' },
+  20: { code:'import re', text:'Imports Python\'s <strong>regular expression</strong> module. Used in <code>search_files</code> to compile a case-insensitive search pattern.' },
+  21: { code:'import glob', text:'Imports the <strong>glob</strong> module for wildcard file discovery. <code>glob.glob(pattern, recursive=True)</code> finds all files matching a pattern like <code>data/**/*</code>.' },
+  22: { code:'import argparse', text:'Imports <strong>argparse</strong> for command-line argument parsing. Enables the <code>--data-dir</code> flag at the bottom of the script.' },
+  24: { code:'from langchain_anthropic import ChatAnthropic', text:'Imports <strong>ChatAnthropic</strong> — the official LangChain integration for Claude. It wraps the Anthropic API and lets you use Claude as the LLM inside any LangChain chain or agent.' },
+  25: { code:'from langchain_core.tools import tool', text:'Imports the <strong>@tool decorator</strong>. When applied to a Python function, it converts it into a LangChain Tool — the docstring becomes the tool\'s description, which the LLM reads to decide when to call it.' },
+  26: { code:'from langchain_core.messages import HumanMessage, SystemMessage', text:'Imports <strong>typed message classes</strong>. <code>HumanMessage</code> wraps user text; <code>SystemMessage</code> wraps the system prompt. All messages in LangChain must be typed objects, not raw strings.' },
+  27: { code:'from langgraph.prebuilt import create_react_agent', text:'Imports LangGraph\'s <strong>prebuilt ReAct agent factory</strong>. ReAct (Reason + Act) is a loop where the model reasons about what to do, calls a tool, observes the result, and repeats until it can answer.' },
+  33: { code:'DATA_DIR = "data"', text:'A <strong>module-level global</strong> holding the data directory path. Defined here (not inside a function) so the <code>@tool</code>-decorated functions — which are also module-level — can access it. Overridden at startup by <code>--data-dir</code>.' },
+  40: { code:'@tool', text:'The <strong>@tool decorator</strong> from LangChain transforms this function into a <code>Tool</code> object with a name (the function name), a description (the docstring), and a callable. The agent\'s LLM sees name + description to decide when to invoke it.' },
+  41: { code:'def list_files(category: str = "") -> str:', text:'Defines the <strong>list_files tool</strong>. Takes an optional category ("emails", "calendar", or "notes") to narrow the search. Returns a newline-separated string of relative file paths — this string becomes the tool result the LLM sees.' },
+  42: { code:'"""List all work files...', text:'The <strong>tool docstring</strong> is critical — the <code>@tool</code> decorator uses this text as the tool\'s description in the LLM\'s prompt. Clear, specific docstrings lead to better tool selection by the model.' },
+  46: { code:'search_path = os.path.join(DATA_DIR, category, "**", "*") if category \\', text:'Builds the <strong>glob pattern</strong>. If a category is given, narrows to that subfolder (e.g. <code>data/emails/**/*</code>); otherwise searches all of <code>data/**/*</code>. The <code>**</code> wildcard matches any number of nested subdirectories.' },
+  49: { code:'files = [f for f in glob.glob(search_path, recursive=True) if os.path.isfile(f)]', text:'Finds all files matching the pattern with <strong>recursive glob</strong>, then filters out directories using <code>os.path.isfile</code>. The list comprehension does both in one readable line.' },
+  53: { code:'rel = [os.path.relpath(f, DATA_DIR) for f in sorted(files)]', text:'Converts absolute paths to <strong>paths relative to DATA_DIR</strong> (e.g. <code>emails/foo.txt</code> instead of <code>/home/user/data/emails/foo.txt</code>). Shorter, more readable for the LLM.' },
+  57: { code:'@tool', text:'Second <code>@tool</code> decorator — same mechanism. Turns <code>read_file</code> into a LangChain Tool the agent can call to read a specific file\'s full contents.' },
+  58: { code:'def read_file(path: str) -> str:', text:'The <strong>read_file tool</strong>. Takes a path relative to the data directory and returns the file\'s text content. The content becomes the tool result the LLM uses to answer the user.' },
+  62: { code:'abs_path = path if os.path.isabs(path) else os.path.join(DATA_DIR, path)', text:'Handles both absolute and relative paths. If the agent passes a relative path like <code>emails/foo.txt</code>, prepends <code>DATA_DIR</code> to make it absolute. If already absolute, uses it directly.' },
+  65: { code:'real_data = os.path.realpath(DATA_DIR)', text:'<code>os.path.realpath</code> resolves all symlinks and <code>..</code> components to get the true canonical path. This is required for the security check to work correctly — a symlink could otherwise bypass it.' },
+  67: { code:'if not real_path.startswith(real_data):', text:'<strong>Path traversal security check.</strong> Without this, an agent could pass <code>"../../../etc/passwd"</code> and read arbitrary system files. This ensures the requested file is always inside <code>DATA_DIR</code>.' },
+  73: { code:'with open(real_path, encoding="utf-8", errors="replace") as f:', text:'Opens the file with <strong>UTF-8 encoding</strong>. <code>errors="replace"</code> substitutes the Unicode replacement character for invalid bytes, preventing crashes on binary or non-UTF-8 files.' },
+  75: { code:'if len(content) > 8000:', text:'<strong>Truncation guard</strong>: caps file content at 8,000 characters before returning it to the LLM. Prevents a single large file from flooding the context window and crowding out other information.' },
+  82: { code:'@tool', text:'Third <code>@tool</code> decorator — turns <code>search_files</code> into a LangChain Tool. The system prompt instructs the agent to use this tool first (it\'s faster than reading whole files).' },
+  83: { code:'def search_files(query: str, category: str = "") -> str:', text:'The <strong>search_files tool</strong>: keyword search across all data files. Returns up to 50 matching lines with file name and line number — like running <code>grep -rn query data/</code>.' },
+  91: { code:'pattern = re.compile(re.escape(query), re.IGNORECASE)', text:'Compiles a <strong>case-insensitive regex</strong>. <code>re.escape(query)</code> treats the query as a literal string (not a regex), so characters like <code>.</code> or <code>*</code> are matched literally rather than as wildcards.' },
+  100: { code:'if pattern.search(line):', text:'Checks each line of each file against the pattern. <code>pattern.search</code> looks for the pattern anywhere in the line (unlike <code>pattern.match</code> which only checks the start).' },
+  102: { code:'matches.append(f"[{rel}:{lineno}] {line.rstrip()}")', text:'Formats matches as <code>[filename:linenum] content</code> — the same format used by grep. This gives the LLM both the location and content, so it can decide which files to read in full.' },
+  103: { code:'if len(matches) >= 50:', text:'<strong>Result cap at 50</strong> — stops collecting matches to keep tool output manageable. Encourages the agent to use more specific search queries if needed.' },
+  117: { code:'SYSTEM_PROMPT = """\\', text:'Defines the <strong>system prompt</strong> — a string of instructions given to the LLM before the conversation starts. It shapes the model\'s role and behavior for the entire session.' },
+  118: { code:'You are a personal work history assistant.', text:'The opening <strong>role framing</strong>. LLMs respond strongly to persona instructions — telling Claude it\'s a "work history assistant" primes it to stay focused on that domain.' },
+  123: { code:'you MUST use the available tools to search', text:'The word <strong>MUST</strong> is intentional — a strong directive to prevent Claude from answering from its parametric memory. Without this, the model might guess rather than actually searching the files.' },
+  129: { code:'1. Start with search_files to find relevant content quickly.', text:'The <strong>5-step approach</strong> in the system prompt is a form of agentic planning embedded in the prompt. Instructing the agent to search first (fast) before reading files (slower) improves efficiency.' },
+  135: { code:'def build_agent():', text:'A <strong>factory function</strong> that constructs and returns the fully wired agent. Wrapping agent creation in a function keeps it clean and allows it to be called once at startup inside <code>chat()</code>.' },
+  136: { code:'llm = ChatAnthropic(model="claude-opus-4-6", max_tokens=4096)', text:'Instantiates <strong>Claude Opus 4.6</strong> as the LLM. <code>max_tokens=4096</code> caps the maximum length of each response the model generates. Opus 4.6 is Anthropic\'s most capable model, suited for reasoning-heavy agent tasks.' },
+  137: { code:'return create_react_agent(', text:'Calls LangGraph\'s <strong>create_react_agent</strong> factory, assembling the ReAct loop: the agent will repeatedly (1) reason about what to do, (2) call a tool, (3) observe the result — until it produces a final answer.' },
+  138: { code:'model=llm,', text:'Passes the Claude LLM as the agent\'s <strong>reasoning engine</strong>. The model is used both to decide which tool to call and to synthesize the final answer from tool results.' },
+  139: { code:'tools=[list_files, read_file, search_files],', text:'Registers the three <strong>@tool-decorated functions</strong>. LangGraph extracts their names and docstrings and presents them to the LLM so it can choose which to call.' },
+  140: { code:'prompt=SYSTEM_PROMPT,', text:'Injects the <strong>system prompt</strong> into the agent. LangGraph prepends it to every invocation, ensuring the agent always has its instructions regardless of what the user asks.' },
+  144: { code:'def chat(data_dir: str) -> None:', text:'The <strong>main chat function</strong> — the interactive REPL. Accepts the data directory path, sets the global, builds the agent, then runs the input loop.' },
+  145: { code:'global DATA_DIR', text:'Declares that this function will <strong>modify the module-level variable</strong> <code>DATA_DIR</code>. Without <code>global</code>, Python would create a new local variable instead, and the tool functions would still use the old value.' },
+  148: { code:'agent = build_agent()', text:'Builds the agent <strong>once</strong> before the loop. The same instance handles every conversation turn — efficient because agent creation has API setup overhead.' },
+  156: { code:'history = []', text:'Initializes the <strong>conversation history</strong> as an empty list. Each turn, messages are appended here. The full history is passed to the agent on every call, giving it complete multi-turn context.' },
+  158: { code:'while True:', text:'Starts the <strong>infinite chat loop</strong>. Runs until the user types a quit command or sends EOF (Ctrl+D) / KeyboardInterrupt (Ctrl+C). Standard pattern for terminal REPLs.' },
+  160: { code:'user_input = input("You: ").strip()', text:'<code>input()</code> <strong>blocks</strong> until the user presses Enter, returning the typed string. <code>.strip()</code> removes leading/trailing whitespace so blank lines are handled cleanly.' },
+  161: { code:'except (EOFError, KeyboardInterrupt):', text:'Catches <strong>Ctrl+D (EOF)</strong> and <strong>Ctrl+C (interrupt)</strong> — common ways to stop a terminal program. Without this, they\'d produce a noisy traceback instead of a clean exit message.' },
+  165: { code:'if user_input.lower() in ("quit", "exit", "q"):', text:'Checks for common <strong>exit keywords</strong>. <code>.lower()</code> makes it case-insensitive so "QUIT", "Quit", and "quit" all work.' },
+  171: { code:'history.append(HumanMessage(content=user_input))', text:'Wraps the user\'s text in a <strong>HumanMessage</strong> and appends it to history. LangChain requires typed message objects — not raw strings — in the messages list.' },
+  173: { code:'result = agent.invoke({"messages": history})', text:'The <strong>core agent call</strong>. Sends the full message history to the ReAct agent. Internally the agent loops — calling tools, observing results, reasoning again — until it produces a final answer. This call blocks until done.' },
+  176: { code:'all_messages = result["messages"]', text:'Extracts the <strong>full updated message list</strong> from the result dict. This includes the original history plus all new messages from the agent\'s internal loop: tool calls, tool results, and the final AI response.' },
+  177: { code:'response = all_messages[-1]', text:'Gets the <strong>last message</strong> — always the agent\'s final AI response after it has finished calling tools and synthesizing an answer.' },
+  180: { code:'for msg in all_messages[len(history):]:', text:'Iterates over <strong>only the new messages</strong> added during this invocation (everything after the pre-existing history), so we can display tool calls without reprinting the whole conversation.' },
+  181: { code:'if hasattr(msg, "tool_calls") and msg.tool_calls:', text:'Checks if a message contains <strong>tool call instructions</strong>. When Claude decides to call a tool, it emits an AI message with a <code>tool_calls</code> attribute listing the tool name and arguments.' },
+  183: { code:"print(f\"  [tool: {tc['name']}({tc['args']})]\")", text:'Prints each <strong>tool invocation</strong> to the terminal so the user can see the agent\'s reasoning — which tools were called and with what arguments. Useful for debugging.' },
+  185: { code:'print(f"\\nAssistant: {response.content}\\n")', text:'Prints the agent\'s <strong>final text answer</strong>. <code>response.content</code> is the synthesized text of the last AI message, after all tool calls have completed.' },
+  188: { code:'history = all_messages', text:'Replaces history with the <strong>full updated message list</strong> including tool calls and results. On the next turn the agent has complete context — it can refer to earlier questions and what the tools returned.' },
+  195: { code:'if __name__ == "__main__":', text:'Standard Python <strong>entry point guard</strong>. Code inside only runs when the script is executed directly (<code>python agent.py</code>). If imported as a module, this block is skipped — safe for unit testing individual functions.' },
+  197: { code:'parser = argparse.ArgumentParser(description="Work history agent")', text:'Creates the <strong>CLI argument parser</strong>. The description string appears when users run <code>python agent.py --help</code>.' },
+  198: { code:'parser.add_argument(', text:'Registers the <strong>--data-dir flag</strong>. When provided (e.g. <code>python agent.py --data-dir /my/docs</code>), it overrides the default <code>"data"</code> directory.' },
+  203: { code:'args = parser.parse_args()', text:'Reads <strong>sys.argv</strong> and returns a namespace object. After this, <code>args.data_dir</code> holds the user-provided path, or <code>"data"</code> if the flag was not passed.' },
+  205: { code:'if not os.path.isdir(data_dir):', text:'Checks whether the <strong>data directory exists</strong>. If not, creates the standard subfolder structure rather than crashing — a friendly first-run experience.' },
+  207: { code:'for sub in ("emails", "calendar", "notes"):', text:'Creates the three <strong>standard subfolders</strong>. <code>os.makedirs(..., exist_ok=True)</code> creates nested directories and does not fail if they already exist.' },
+  211: { code:'chat(data_dir)', text:'If the data directory already exists, <strong>starts the interactive chat</strong>. This is the normal execution path after the user has set up their data directory.' },
+};
+
+// ── Render code ──────────────────────────────────────────────────────────────
+const rawEl = document.getElementById('rawCode');
+const lines = rawEl.textContent.split('\n');
+// The <pre> starts with a newline after the opening tag, so line[0] is empty
+// We want lines[1] onward to map to file line 1
+const codeLines = lines[0] === '' ? lines.slice(1) : lines;
+
+const scroll = document.getElementById('codeScroll');
+
+codeLines.forEach((text, idx) => {
+  const lineNum = idx + 1;
+  const div = document.createElement('div');
+  div.className = 'code-line';
+  div.id = 'L' + lineNum;
+  div.dataset.line = lineNum;
+
+  const numSpan = document.createElement('span');
+  numSpan.className = 'line-num';
+  numSpan.textContent = lineNum;
+
+  const contentSpan = document.createElement('span');
+  contentSpan.className = 'line-content';
+  contentSpan.textContent = text; // safe: textContent, no XSS
+
+  div.appendChild(numSpan);
+  div.appendChild(contentSpan);
+  scroll.appendChild(div);
+
+  div.addEventListener('click', e => showPopup(lineNum, text, e));
+});
+
+// ── Highlight helpers ────────────────────────────────────────────────────────
+function inRanges(n, ranges) {
+  return ranges.some(([a,b]) => n >= a && n <= b);
+}
+
+function setHighlight(nodeKey, on) {
+  const ranges = NODE_RANGES[nodeKey];
+  if (!ranges) return;
+  document.querySelectorAll('.code-line').forEach(el => {
+    if (inRanges(+el.dataset.line, ranges)) {
+      el.classList.toggle('hi', on);
+    }
+  });
+}
+
+function scrollToNode(nodeKey) {
+  const ranges = NODE_RANGES[nodeKey];
+  if (!ranges) return;
+  const first = ranges[0][0];
+  const el = document.getElementById('L' + first);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── Node interactions ────────────────────────────────────────────────────────
+document.querySelectorAll('.flow-node').forEach(node => {
+  const key = node.dataset.node;
+  node.addEventListener('mouseenter', () => { setHighlight(key, true);  node.classList.add('active'); });
+  node.addEventListener('mouseleave', () => { setHighlight(key, false); node.classList.remove('active'); });
+  node.addEventListener('click',      () => scrollToNode(key));
+});
+
+// ── Popup ────────────────────────────────────────────────────────────────────
+const popup     = document.getElementById('popup');
+const popupCode = document.getElementById('popupCode');
+const popupBody = document.getElementById('popupBody');
+
+function nodeForLine(n) {
+  for (const [key, ranges] of Object.entries(NODE_RANGES)) {
+    if (inRanges(n, ranges)) return key;
+  }
+  return null;
+}
+
+function showPopup(lineNum, text, e) {
+  const exp = EXPL[lineNum];
+  const trimmed = text.trim();
+
+  if (exp) {
+    popupCode.textContent = exp.code;
+    popupBody.innerHTML   = exp.text;
+  } else if (trimmed) {
+    const nodeKey = nodeForLine(lineNum);
+    popupCode.textContent = trimmed.length > 60 ? trimmed.slice(0,60)+'…' : trimmed;
+    popupBody.innerHTML   = nodeKey
+      ? `Part of the <strong>${NODE_LABELS[nodeKey]}</strong> section.`
+      : 'Supporting code.';
+  } else {
+    return; // blank line — do nothing
+  }
+
+  const x = Math.min(e.clientX + 14, window.innerWidth  - 450);
+  const y = Math.min(e.clientY + 14, window.innerHeight - 200);
+  popup.style.left = x + 'px';
+  popup.style.top  = y + 'px';
+  popup.classList.add('on');
+
+  document.querySelectorAll('.code-line.picked').forEach(el => el.classList.remove('picked'));
+  document.getElementById('L' + lineNum)?.classList.add('picked');
+}
+
+document.getElementById('popupClose').addEventListener('click', () => popup.classList.remove('on'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') popup.classList.remove('on'); });
+document.addEventListener('click', e => {
+  if (!popup.contains(e.target) && !e.target.closest('.code-line')) {
+    popup.classList.remove('on');
+  }
+});
+</script>
+</body>
+</html>

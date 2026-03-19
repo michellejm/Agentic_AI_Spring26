@@ -1,0 +1,18 @@
+From: dev.kumar@company.com
+To: michelle@company.com
+Date: Wed, 13 Mar 2024 14:30:00 -0800
+Subject: Re: PR #847 — JWT Refresh Flow
+
+Michelle,
+
+Reviewed PR #847. Left a few comments on the token expiry logic in
+auth/middleware.py — specifically the sliding window calculation seems
+off by one when the token is exactly at the boundary.
+
+Otherwise looks great. The new Redis caching layer you added cuts
+token validation from ~40ms down to ~4ms. Nice work.
+
+One question: should we also handle refresh token revocation in this PR
+or open a follow-up ticket?
+
+— Dev

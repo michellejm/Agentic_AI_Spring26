@@ -1,0 +1,17 @@
+From: sarah.chen@company.com
+To: team@company.com
+Date: Mon, 4 Mar 2024 09:15:00 -0800
+Subject: Sprint 12 Kickoff — Auth Service Rewrite
+
+Hi team,
+
+Kicking off Sprint 12 today. Main focus:
+
+- Michelle: leading the JWT token refresh flow redesign
+- Dev: database migration for the user sessions table
+- Priya: front-end login page updates
+
+Goal: have the auth service rewrite merged by March 15.
+Retro is Friday at 3pm.
+
+Sarah
