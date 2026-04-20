@@ -1,0 +1,275 @@
+
+<style>
+h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.cat-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+.tab-btn{font-size:12px;padding:5px 12px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer;transition:all .15s}
+.tab-btn.active{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-primary)}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.metric-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;cursor:pointer;transition:border-color .15s}
+.metric-card:hover{border-color:var(--color-border-primary)}
+.metric-card.expanded{border-color:var(--color-border-secondary)}
+.mc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.mc-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px}
+.mc-badge{font-size:11px;padding:2px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;margin-top:1px}
+.mc-tagline{font-size:12px;color:var(--color-text-secondary);margin:0}
+.mc-detail{margin-top:12px;display:none}
+.metric-card.expanded .mc-detail{display:block}
+.mc-section{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 4px}
+.mc-row{font-size:12px;color:var(--color-text-secondary);padding:4px 0;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;gap:8px;align-items:flex-start}
+.mc-row:last-child{border-bottom:none}
+.mc-row-label{min-width:80px;font-weight:500;color:var(--color-text-primary)}
+.mc-formula{font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:6px 8px;border-radius:4px;margin-top:6px;color:var(--color-text-secondary);white-space:pre-wrap}
+.toggle-arrow{font-size:12px;color:var(--color-text-tertiary);transition:transform .15s;margin-top:2px}
+.metric-card.expanded .toggle-arrow{transform:rotate(90deg)}
+</style>
+
+<h2 class="sr-only">LLM abstract property quantification strategies — interactive reference card</h2>
+
+<div class="cat-tabs" id="tabs"></div>
+<div class="metric-grid" id="grid"></div>
+
+<script>
+const cats = {
+  "Factuality": [
+    {
+      name:"Hallucination Rate",
+      badge:"Factuality",
+      bc:"var(--color-background-danger)",tc:"var(--color-text-danger)",
+      tagline:"Proportion of generated claims that are unsupported or false",
+      input:"A set of generated responses + a verifiable ground truth source",
+      approach:"Claim decomposition → atomic fact extraction → verification against source",
+      formula:`Hallucination Rate = |False Claims| / |Total Claims|`,
+      tools:"FActScore (Min et al. 2023), FactScore-Lite, RAGAs faithfulness score",
+      pitfall:"'Claim' granularity is ambiguous — consistent segmentation is critical"
+    },
+    {
+      name:"Faithfulness",
+      badge:"Factuality",
+      bc:"var(--color-background-danger)",tc:"var(--color-text-danger)",
+      tagline:"How well the output is grounded in a provided source context",
+      input:"Generated answer + context (RAG scenario)",
+      approach:"For each sentence in the output: check if it is entailed by the context via NLI or LLM-as-judge",
+      formula:`Faithfulness = |Entailed Sentences| / |Total Sentences in Output|`,
+      tools:"RAGAs, TruLens, LangChain Eval",
+      pitfall:"Context length affects NLI reliability — very long contexts reduce model accuracy"
+    },
+    {
+      name:"Calibration / Confidence Alignment",
+      badge:"Factuality",
+      bc:"var(--color-background-danger)",tc:"var(--color-text-danger)",
+      tagline:"Whether stated certainty matches actual accuracy",
+      input:"Model answers + self-reported confidence + correctness labels",
+      approach:"Compare empirical accuracy within each confidence bucket; compute Expected Calibration Error",
+      formula:`ECE = Σ_b (|B_b|/n) · |acc(B_b) − conf(B_b)|`,
+      tools:"reliability_diagram (sklearn), verbal confidence probing via prompts",
+      pitfall:"Models rarely give calibrated verbal confidence; token-probability calibration differs from verbal"
+    }
+  ],
+  "Coherence": [
+    {
+      name:"Local Coherence",
+      badge:"Coherence",
+      bc:"var(--color-background-info)",tc:"var(--color-text-info)",
+      tagline:"Sentence-to-sentence logical and referential continuity",
+      input:"A multi-sentence output",
+      approach:"Compute cosine similarity of consecutive sentence embeddings; average across pairs. Or use discourse parsing (RST) to detect broken coherence relations.",
+      formula:`Local Coh. = (1/(n-1)) · Σ cos(emb_i, emb_{i+1})`,
+      tools:"sentence-transformers (all-MiniLM), RST-DT parser, GPT-4 sentence-pair rating",
+      pitfall:"Cosine similarity captures topical continuity but misses logical breaks (contradiction, topic drift)"
+    },
+    {
+      name:"Global Coherence / Topic Consistency",
+      badge:"Coherence",
+      bc:"var(--color-background-info)",tc:"var(--color-text-info)",
+      tagline:"Whether the output maintains a unified theme or argument",
+      input:"Long-form generated text (essay, report)",
+      approach:"Embed the full text and each paragraph; measure mean distance from the overall centroid. Use LDA/BERTopic to detect unexpected topic shifts.",
+      formula:`Topic Drift = max_i ||emb_para_i − emb_mean||_2`,
+      tools:"BERTopic, sentence-transformers, LLM-as-judge (G-Eval)",
+      pitfall:"Intentional multi-topic texts will score poorly — must account for document structure"
+    },
+    {
+      name:"Self-Consistency",
+      badge:"Coherence",
+      bc:"var(--color-background-info)",tc:"var(--color-text-info)",
+      tagline:"Whether the model gives the same answer across equivalent phrasings",
+      input:"N paraphrased versions of the same question",
+      approach:"Sample k outputs per question variant. Measure majority-vote agreement rate. Contradictions flagged as incoherence.",
+      formula:`Consistency = |Majority Answer Agreements| / k`,
+      tools:"Self-consistency decoding (Wang et al. 2022), BERTScore for soft matching",
+      pitfall:"Semantic equivalence of answers (not just lexical) requires NLI or LLM comparison"
+    }
+  ],
+  "Logical Reasoning": [
+    {
+      name:"Deductive Validity",
+      badge:"Logic",
+      bc:"var(--color-background-success)",tc:"var(--color-text-success)",
+      tagline:"Whether conclusions follow necessarily from given premises",
+      input:"Syllogism or formal argument → model's stated conclusion",
+      approach:"Construct synthetic argument sets (valid/invalid) with known ground truth. Score accuracy. Use templated neutralization to remove world-knowledge shortcuts.",
+      formula:`Validity Acc. = |Correct Validity Judgments| / |Total Arguments|`,
+      tools:"LogiQA, ReClor, FOLIO, ProntoQA benchmarks",
+      pitfall:"Models may leverage world knowledge rather than formal structure — use 'abstract symbol' versions to isolate pure reasoning"
+    },
+    {
+      name:"Multi-Step Reasoning Chain Quality",
+      badge:"Logic",
+      bc:"var(--color-background-success)",tc:"var(--color-text-success)",
+      tagline:"Whether each step in a chain of thought is locally valid",
+      input:"CoT output → step sequence",
+      approach:"Decompose chain into individual (premise, inference, conclusion) triples. Score each transition with NLI or LLM judge. Aggregate step-wise validity.",
+      formula:`Chain Quality = Σ step_validity_i / N_steps`,
+      tools:"ProcessBench, PRM800K, OmegaPRM, MathShepherd",
+      pitfall:"Final answer correctness ≠ reasoning quality (right answer, wrong path is common)"
+    },
+    {
+      name:"Counterfactual Reasoning",
+      badge:"Logic",
+      bc:"var(--color-background-success)",tc:"var(--color-text-success)",
+      tagline:"Ability to reason under hypothetical premise alterations",
+      input:"Factual context + counterfactual question ('What if X were not true?')",
+      approach:"Pair each factual QA item with a counterfactual variant. Score whether model correctly reverses or updates its answer in line with the hypothetical.",
+      formula:`CF Acc. = |Correct Counterfactual Answers| / |Total CF Pairs|`,
+      tools:"CFQ dataset, counterfactual NLI tasks",
+      pitfall:"Model may simply negate the fact without full propagation of consequences"
+    }
+  ],
+  "Relevance": [
+    {
+      name:"Answer Relevance",
+      badge:"Relevance",
+      bc:"var(--color-background-warning)",tc:"var(--color-text-warning)",
+      tagline:"Whether the output actually addresses the question asked",
+      input:"Question + generated answer",
+      approach:"Generate 3–5 reverse-questions from the answer (ask LLM: 'what question does this answer?'). Embed them and compute cosine similarity to original question.",
+      formula:`AR = mean cos(emb(reverse_q_i), emb(original_q))`,
+      tools:"RAGAs answer relevancy, G-Eval",
+      pitfall:"Polite but vague answers can score high — combine with completeness check"
+    },
+    {
+      name:"Context Precision / Recall",
+      badge:"Relevance",
+      bc:"var(--color-background-warning)",tc:"var(--color-text-warning)",
+      tagline:"How well the model uses retrieved context (RAG quality)",
+      input:"Query + retrieved chunks + generated answer",
+      approach:"Precision: what fraction of retrieved chunks are actually used. Recall: what fraction of relevant chunks (annotated) appear in the used context.",
+      formula:`Precision = |Used ∩ Relevant| / |Used|\nRecall = |Used ∩ Relevant| / |Relevant|`,
+      tools:"RAGAs context_precision / context_recall, TruLens",
+      pitfall:"'Used' is hard to detect automatically — proxy with NLI attribution or attention analysis"
+    }
+  ],
+  "Consistency": [
+    {
+      name:"Behavioral Consistency Across Rephrasings",
+      badge:"Consistency",
+      bc:"var(--color-background-secondary)",tc:"var(--color-text-primary)",
+      tagline:"Semantic stability of output under equivalent input variations",
+      input:"Lexically varied but semantically identical prompts",
+      approach:"Generate outputs for N paraphrase variants. Compute pairwise BERTScore or NLI-entailment between outputs. Low mean → inconsistent.",
+      formula:`Consistency = mean BERTScore(output_i, output_j) for i≠j`,
+      tools:"BERTScore, NLI-based (DeBERTa-mnli), ParaBank paraphrases",
+      pitfall:"Sensitivity varies with temperature — always fix decoding parameters when measuring"
+    },
+    {
+      name:"Instruction Following Fidelity",
+      badge:"Consistency",
+      bc:"var(--color-background-secondary)",tc:"var(--color-text-primary)",
+      tagline:"Whether the model obeys all explicit constraints in the prompt",
+      input:"Prompt with N verifiable constraints + output",
+      approach:"Define constraint types (length, format, keywords, tone). Write a verifier for each type. Score = fraction of constraints satisfied.",
+      formula:`IFF = |Satisfied Constraints| / |Total Constraints|`,
+      tools:"IFEval (Zhou et al. 2023), PromptBench, MT-Bench instruction rubric",
+      pitfall:"Some constraints interact; a model may satisfy each individually but violate their conjunction"
+    }
+  ],
+  "Other Abstracts": [
+    {
+      name:"Toxicity / Bias",
+      badge:"Safety",
+      bc:"var(--color-background-danger)",tc:"var(--color-text-danger)",
+      tagline:"Probability of generating harmful or demographically biased content",
+      input:"Prompts from a diverse or adversarial set",
+      approach:"Run output through a calibrated toxicity classifier. For bias: compare outputs across protected-attribute swapped prompts (counterfactual data augmentation).",
+      formula:`Toxicity Rate = |Toxic Outputs| / N\nBias = |f(x_orig) ≠ f(x_swapped)| / N`,
+      tools:"Perspective API, ToxiGen, WinoBias, Holistic Bias (Meta)",
+      pitfall:"Classifier coverage is limited; adversarial prompts often bypass detection"
+    },
+    {
+      name:"Fluency",
+      badge:"Surface",
+      bc:"var(--color-background-secondary)",tc:"var(--color-text-primary)",
+      tagline:"How natural and grammatically well-formed the output is",
+      input:"Any generated text",
+      approach:"(1) Perplexity under a reference LM (lower = more fluent). (2) Grammar error count via LanguageTool. (3) Human Likert rating as gold standard.",
+      formula:`Perplexity = exp(-1/N · Σ log P(w_i | context))`,
+      tools:"KenLM, GPT-2 perplexity, LanguageTool API",
+      pitfall:"Low perplexity does not mean correctness — fluent text can be factually wrong"
+    },
+    {
+      name:"Semantic Similarity / BERTScore",
+      badge:"Surface",
+      bc:"var(--color-background-secondary)",tc:"var(--color-text-primary)",
+      tagline:"Soft overlap between generated and reference text via contextual embeddings",
+      input:"Generated text + reference text",
+      approach:"Align each token in the hypothesis to the most similar token in the reference using contextual embeddings (BERT). Compute precision, recall, F1.",
+      formula:`BERTScore_F1 = 2·P·R / (P+R)\nP = (1/|ŷ|)·Σ max_{r∈y} cos(ŷ_i, r)`,
+      tools:"bert-score (Python lib), DeBERTa variant recommended",
+      pitfall:"Sensitive to model choice; does not capture factual accuracy or logical structure"
+    }
+  ]
+};
+
+const allCategories = Object.keys(cats);
+let activeCat = allCategories[0];
+let expanded = null;
+
+const tabsEl = document.getElementById('tabs');
+const gridEl = document.getElementById('grid');
+
+function renderTabs() {
+  tabsEl.innerHTML = allCategories.map(c =>
+    `<button class="tab-btn${c===activeCat?' active':''}" data-cat="${c}">${c}</button>`
+  ).join('');
+  tabsEl.querySelectorAll('.tab-btn').forEach(b => {
+    b.addEventListener('click', () => { activeCat = b.dataset.cat; expanded = null; render(); });
+  });
+}
+
+function renderGrid() {
+  const items = cats[activeCat];
+  gridEl.innerHTML = items.map((m, i) => `
+    <div class="metric-card${expanded===i?' expanded':''}" data-i="${i}">
+      <div class="mc-header">
+        <div>
+          <p class="mc-title">${m.name}</p>
+          <p class="mc-tagline">${m.tagline}</p>
+        </div>
+        <span class="toggle-arrow">▶</span>
+      </div>
+      <div class="mc-detail">
+        <div class="mc-section">Input</div>
+        <div class="mc-row">${m.input}</div>
+        <div class="mc-section">Approach</div>
+        <div class="mc-row">${m.approach}</div>
+        <div class="mc-section">Formula</div>
+        <div class="mc-formula">${m.formula}</div>
+        <div class="mc-section">Tools / Benchmarks</div>
+        <div class="mc-row">${m.tools}</div>
+        <div class="mc-section">Key Pitfall</div>
+        <div class="mc-row" style="color:var(--color-text-danger)">${m.pitfall}</div>
+      </div>
+    </div>
+  `).join('');
+  gridEl.querySelectorAll('.metric-card').forEach(c => {
+    c.addEventListener('click', () => {
+      const i = +c.dataset.i;
+      expanded = expanded===i ? null : i;
+      render();
+    });
+  });
+}
+
+function render() { renderTabs(); renderGrid(); }
+render();
+</script>
