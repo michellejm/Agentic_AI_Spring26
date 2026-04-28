@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Code — Data Analyst Skills</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #ffffff;
+      --bg2:         #f5f5f3;
+      --bg3:         #efefec;
+      --text:        #1a1a18;
+      --text2:       #6b6b66;
+      --text3:       #9b9b94;
+      --border:      rgba(0,0,0,0.10);
+      --border2:     rgba(0,0,0,0.18);
+      --border3:     rgba(0,0,0,0.26);
+      --radius-sm:   8px;
+      --radius-md:   10px;
+      --radius-lg:   14px;
+      --font:        -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:      #1a1a18;
+        --bg2:     #232320;
+        --bg3:     #2c2c29;
+        --text:    #f0f0ec;
+        --text2:   #9b9b94;
+        --text3:   #6b6b66;
+        --border:  rgba(255,255,255,0.09);
+        --border2: rgba(255,255,255,0.16);
+        --border3: rgba(255,255,255,0.24);
+      }
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 48px 24px 80px;
+    }
+
+    .page {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    .header {
+      margin-bottom: 40px;
+    }
+    .header-eyebrow {
+      font-size: 12px;
+      color: var(--text3);
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .header h1 {
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.25;
+      margin-bottom: 10px;
+    }
+    .header p {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.6;
+      max-width: 560px;
+    }
+
+    /* ── Section labels ──────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .section-hint {
+      font-size: 12px;
+      color: var(--text3);
+    }
+
+    /* ── Category grid ───────────────────────────────────────── */
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .cat-card {
+      border: 0.5px solid var(--border);
+      border-left: 3px solid var(--cat-color, #888);
+      border-radius: var(--radius-md);
+      padding: 10px 10px 8px;
+      background: var(--bg);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .cat-card:hover { background: var(--bg2); }
+    .cat-card.open  { background: var(--bg2); }
+
+    .cat-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .cat-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.35;
+      flex: 1;
+    }
+    .cat-count {
+      font-size: 11px;
+      color: var(--text3);
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+
+    .cat-tasks {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, margin-top 0.3s ease;
+    }
+    .cat-task-item {
+      font-size: 11px;
+      color: var(--text2);
+      padding: 4px 0 0;
+      line-height: 1.4;
+      border-top: 0.5px solid var(--border);
+      margin-top: 4px;
+    }
+
+    /* ── Divider ─────────────────────────────────────────────── */
+    .divider {
+      border: none;
+      border-top: 0.5px solid var(--border);
+      margin: 0 0 28px;
+    }
+
+    /* ── Skill cards ─────────────────────────────────────────── */
+    .skill-card {
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      background: var(--bg);
+      margin-bottom: 12px;
+    }
+
+    .skill-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .skill-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .skill-desc {
+      font-size: 11px;
+      color: var(--text2);
+      line-height: 1.55;
+    }
+
+    .toggle-btn {
+      font-family: var(--font);
+      font-size: 11px;
+      color: var(--text2);
+      background: transparent;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 4px 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+      transition: background 0.12s, color 0.12s;
+    }
+    .toggle-btn:hover { background: var(--bg2); color: var(--text); }
+    .toggle-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* ── Chain ───────────────────────────────────────────────── */
+    .flow-area { overflow-x: auto; padding-bottom: 4px; }
+
+    .chips-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: max-content;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border: 0.5px solid var(--border2);
+      border-left: 2.5px solid var(--chip-color, #888);
+      border-radius: var(--radius-sm);
+      background: var(--bg2);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 108px;
+      transition: transform 0.38s cubic-bezier(.4,0,.2,1), opacity 0.38s ease;
+      will-change: transform, opacity;
+    }
+    .chip-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      line-height: 1.3;
+    }
+    .chip-cat {
+      font-size: 10px;
+      color: var(--text3);
+    }
+
+    .arrow-conn {
+      display: flex;
+      align-items: center;
+      padding: 0 3px;
+      flex-shrink: 0;
+      gap: 2px;
+      transition: opacity 0.2s;
+    }
+    .arrow-glyph {
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    @keyframes flow-move {
+      0%   { transform: translateX(-5px); opacity: 0; }
+      25%  { opacity: 1; }
+      75%  { opacity: 1; }
+      100% { transform: translateX(5px); opacity: 0; }
+    }
+    .flow-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--text3);
+      animation: flow-move 1.6s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    /* ── Skill badge ─────────────────────────────────────────── */
+    .badge-wrap {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 0 2px;
+    }
+    .skill-badge {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 32px;
+      border: 0.5px solid var(--border3);
+      border-left: 3px solid var(--skill-color, #888);
+      border-radius: var(--radius-lg);
+      background: var(--bg2);
+      transform: scale(0.82);
+      opacity: 0;
+      transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s ease;
+    }
+    .badge-tag {
+      font-size: 10px;
+      color: var(--text3);
+      margin-bottom: 4px;
+      letter-spacing: 0.05em;
+    }
+    .badge-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .badge-count {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 4px;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    .footer {
+      margin-top: 56px;
+      padding-top: 20px;
+      border-top: 0.5px solid var(--border);
+      font-size: 12px;
+      color: var(--text3);
+    }
+
+    @media (max-width: 540px) {
+      .cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      body { padding: 32px 16px 60px; }
+      .header h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="header">
+    <p class="header-eyebrow">Claude Code + MCP</p>
+    <h1>Data analyst skills</h1>
+    <p>Knowledge worker tasks that Claude Code can automate with a well-connected MCP setup — organized by category and composed into reusable workflow skills.</p>
+  </header>
+
+  <div class="section-header">
+    <span class="section-title">Task categories</span>
+    <span class="section-hint">click to expand</span>
+  </div>
+  <div class="cat-grid" id="cat-grid"></div>
+
+  <hr class="divider" />
+
+  <div class="section-header" style="margin-bottom:12px">
+    <span class="section-title">Composable skills</span>
+    <span class="section-hint">tasks chained into a single command</span>
+  </div>
+  <div id="skills-container"></div>
+
+  <footer class="footer">
+    Built with Claude Code &mdash; each skill is a chain of MCP-connected tasks collapsed into one reusable command.
+  </footer>
+
+</div>
+<script>
+const CATS = [
+  { name:'Project & task mgmt', color:'#185FA5', tasks:[
+    'Triage and prioritize backlog by impact + effort',
+    'Auto-generate weekly status reports from ticket movement',
+    'Create project plans with tasks, owners, and deadlines',
+    'Detect blocked tickets and draft nudges to owners',
+  ]},
+  { name:'Communication & email', color:'#0F6E56', tasks:[
+    'Process inbox: categorize, draft replies, flag urgent items',
+    'Write personalized outreach sequences from CRM contacts',
+    'Summarize long email threads into decisions + action items',
+    'Draft meeting follow-ups from calendar notes and attendees',
+  ]},
+  { name:'Research & analysis', color:'#534AB7', tasks:[
+    'Pull from DB/warehouse, analyze, write narrative summary',
+    'Competitive research: scrape, cross-reference, brief',
+    'Synthesize Slack + Confluence into an executive summary',
+    'Monitor dashboards for anomalies, file tickets or send alerts',
+  ]},
+  { name:'Knowledge management', color:'#BA7517', tasks:[
+    'Find outdated Confluence/Notion docs and update or flag',
+    'Build FAQ by mining Slack for repeated questions',
+    'Migrate content between wikis, standardizing formatting',
+    'Cross-link related documents with no current references',
+  ]},
+  { name:'Sales & CRM', color:'#993C1D', tasks:[
+    'Enrich CRM records with web data and update Salesforce fields',
+    'Generate personalized proposals from deal data in CRM',
+    'Analyze pipeline and write forecast with risk flags',
+    'Auto-log call notes from transcripts into CRM opportunities',
+  ]},
+  { name:'Engineering support', color:'#5F5E5A', tasks:[
+    'Write, review, and merge PRs, then update linked Jira ticket',
+    'Generate release notes from merged PRs and post to channels',
+    'Audit codebase for security issues, file per-finding tickets',
+    'Onboarding: set up accounts, send intros, create starter tasks',
+  ]},
+  { name:'Scheduling & ops', color:'#3B6D11', tasks:[
+    'Find mutual availability and schedule with context in invite',
+    'Coordinate multi-timezone kickoffs with pre-populated agendas',
+    'Set up recurring reporting workflows: pull → write → send',
+  ]},
+  { name:'Document & content', color:'#993556', tasks:[
+    'Turn a brain dump into a polished memo, RFC, or one-pager',
+    'Generate slide decks from a document or data source',
+    'Maintain a living changelog by watching GitHub + Jira',
+    'Localize content across languages via translation API',
+  ]},
+  { name:'Compliance & audit', color:'#A32D2D', tasks:[
+    'Audit access logs and flag anomalies or policy violations',
+    'Verify tickets/PRs have required fields before close',
+    'Generate audit trails from system logs as readable reports',
+  ]},
+];
+
+const SKILLS = [
+  {
+    name: 'Weekly metrics report',
+    description: 'Every week: query warehouse → compare to prior period → flag anomalies → write commentary → update dashboard → notify stakeholders',
+    skillColor: '#534AB7',
+    tasks: [
+      { label:'Query data warehouse',       cat:'Research', color:'#534AB7' },
+      { label:'Compare prior period',       cat:'Research', color:'#534AB7' },
+      { label:'Flag anomalies',             cat:'Research', color:'#534AB7' },
+      { label:'Write narrative commentary', cat:'Docs',     color:'#993556' },
+      { label:'Update dashboard',           cat:'Docs',     color:'#993556' },
+      { label:'Email stakeholders',         cat:'Comms',    color:'#0F6E56' },
+    ]
+  },
+  {
+    name: 'Ad-hoc analysis request',
+    description: 'Parse request from Slack/email → identify sources → pull & clean data → run analysis → visualize → present findings',
+    skillColor: '#185FA5',
+    tasks: [
+      { label:'Parse stakeholder request', cat:'Comms',    color:'#0F6E56' },
+      { label:'Identify data sources',     cat:'Research', color:'#534AB7' },
+      { label:'Pull & clean data',         cat:'Research', color:'#534AB7' },
+      { label:'Run analysis',              cat:'Research', color:'#534AB7' },
+      { label:'Build visualization',       cat:'Docs',     color:'#993556' },
+      { label:'Present findings',          cat:'Comms',    color:'#0F6E56' },
+    ]
+  },
+  {
+    name: 'Data quality audit',
+    description: 'Profile dataset → detect nulls, outliers & schema drift → cross-ref source systems → document issues → file tickets → update data dictionary',
+    skillColor: '#A32D2D',
+    tasks: [
+      { label:'Profile dataset',          cat:'Research',  color:'#534AB7' },
+      { label:'Detect nulls & outliers',  cat:'Research',  color:'#534AB7' },
+      { label:'Cross-ref source systems', cat:'Research',  color:'#534AB7' },
+      { label:'Document issues',          cat:'Knowledge', color:'#BA7517' },
+      { label:'File data tickets',        cat:'Project',   color:'#185FA5' },
+      { label:'Update data dictionary',   cat:'Knowledge', color:'#BA7517' },
+    ]
+  },
+];
+
+// ── Render categories ─────────────────────────────────────────────────────────
+const catGrid = document.getElementById('cat-grid');
+CATS.forEach(cat => {
+  const card = document.createElement('div');
+  card.className = 'cat-card';
+  card.style.setProperty('--cat-color', cat.color);
+
+  const header = document.createElement('div');
+  header.className = 'cat-header';
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'cat-name';
+  nameEl.textContent = cat.name;
+
+  const countEl = document.createElement('div');
+  countEl.className = 'cat-count';
+  countEl.textContent = cat.tasks.length;
+
+  header.append(nameEl, countEl);
+  card.appendChild(header);
+
+  const tasksWrap = document.createElement('div');
+  tasksWrap.className = 'cat-tasks';
+
+  cat.tasks.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'cat-task-item';
+    item.textContent = t;
+    tasksWrap.appendChild(item);
+  });
+  card.appendChild(tasksWrap);
+
+  let open = false;
+  card.addEventListener('click', () => {
+    open = !open;
+    tasksWrap.style.maxHeight = open ? `${cat.tasks.length * 44}px` : '0';
+    tasksWrap.style.marginTop = open ? '8px' : '0';
+    card.classList.toggle('open', open);
+  });
+
+  catGrid.appendChild(card);
+});
+
+// ── Render skill workflows ────────────────────────────────────────────────────
+const skillsContainer = document.getElementById('skills-container');
+
+SKILLS.forEach(skill => {
+  const card = document.createElement('div');
+  card.className = 'skill-card';
+
+  // Header
+  const hdEl = document.createElement('div');
+  hdEl.className = 'skill-header';
+
+  const titleGroup = document.createElement('div');
+  titleGroup.style.cssText = 'flex:1;min-width:0';
+
+  const titleEl = document.createElement('div');
+  titleEl.className = 'skill-title';
+  titleEl.textContent = skill.name;
+
+  const descEl = document.createElement('div');
+  descEl.className = 'skill-desc';
+  descEl.textContent = skill.description;
+
+  titleGroup.append(titleEl, descEl);
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'toggle-btn';
+  toggleBtn.textContent = 'Collapse';
+
+  hdEl.append(titleGroup, toggleBtn);
+  card.appendChild(hdEl);
+
+  // Flow area
+  const flowArea = document.createElement('div');
+  flowArea.className = 'flow-area';
+
+  const chipsRow = document.createElement('div');
+  chipsRow.className = 'chips-row';
+
+  const chipEls = [];
+
+  skill.tasks.forEach((task, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.style.setProperty('--chip-color', task.color);
+
+    const lbl = document.createElement('div');
+    lbl.className = 'chip-label';
+    lbl.textContent = task.label;
+
+    const sub = document.createElement('div');
+    sub.className = 'chip-cat';
+    sub.textContent = task.cat;
+
+    chip.append(lbl, sub);
+    chipEls.push(chip);
+    chipsRow.appendChild(chip);
+
+    if (i < skill.tasks.length - 1) {
+      const conn = document.createElement('div');
+      conn.className = 'arrow-conn';
+
+      const dot = document.createElement('div');
+      dot.className = 'flow-dot';
+      dot.style.animationDelay = `${i * 0.28}s`;
+
+      const arr = document.createElement('div');
+      arr.className = 'arrow-glyph';
+      arr.textContent = '→';
+
+      conn.append(dot, arr);
+      chipsRow.appendChild(conn);
+    }
+  });
+
+  flowArea.appendChild(chipsRow);
+  card.appendChild(flowArea);
+
+  // Badge
+  const badgeWrap = document.createElement('div');
+  badgeWrap.className = 'badge-wrap';
+
+  const badge = document.createElement('div');
+  badge.className = 'skill-badge';
+  badge.style.setProperty('--skill-color', skill.skillColor);
+
+  const bTag = document.createElement('div');
+  bTag.className = 'badge-tag';
+  bTag.textContent = 'skill';
+
+  const bName = document.createElement('div');
+  bName.className = 'badge-name';
+  bName.textContent = skill.name;
+
+  const bCount = document.createElement('div');
+  bCount.className = 'badge-count';
+  bCount.textContent = `${skill.tasks.length} tasks chained`;
+
+  badge.append(bTag, bName, bCount);
+  badgeWrap.appendChild(badge);
+  card.appendChild(badgeWrap);
+
+  // Toggle
+  let collapsed = false;
+
+  toggleBtn.addEventListener('click', () => {
+    collapsed = !collapsed;
+
+    if (collapsed) {
+      toggleBtn.textContent = 'Expand';
+      toggleBtn.disabled = true;
+      chipEls.forEach((chip, i) => {
+        setTimeout(() => {
+          chip.style.transform = 'scale(0.65) translateY(-8px)';
+          chip.style.opacity = '0';
+        }, i * 55);
+      });
+      chipsRow.querySelectorAll('.arrow-conn').forEach(a => { a.style.opacity = '0'; });
+      setTimeout(() => {
+        flowArea.style.display = 'none';
+        badgeWrap.style.display = 'flex';
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          badge.style.transform = 'scale(1)';
+          badge.style.opacity = '1';
+          toggleBtn.disabled = false;
+        }));
+      }, chipEls.length * 55 + 240);
+
+    } else {
+      toggleBtn.textContent = 'Collapse';
+      toggleBtn.disabled = true;
+      badge.style.transform = 'scale(0.82)';
+      badge.style.opacity = '0';
+      setTimeout(() => {
+        badgeWrap.style.display = 'none';
+        flowArea.style.display = 'block';
+        chipEls.forEach(chip => {
+          chip.style.transition = 'none';
+          chip.style.transform = 'scale(0.65) translateY(-8px)';
+          chip.style.opacity = '0';
+        });
+        chipsRow.querySelectorAll('.arrow-conn').forEach(a => { a.style.opacity = '0'; });
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          chipEls.forEach((chip, i) => {
+            setTimeout(() => {
+              chip.style.transition = 'transform 0.38s cubic-bezier(.4,0,.2,1), opacity 0.38s ease';
+              chip.style.transform = 'scale(1) translateY(0)';
+              chip.style.opacity = '1';
+            }, i * 55);
+          });
+          setTimeout(() => {
+            chipsRow.querySelectorAll('.arrow-conn').forEach(a => { a.style.opacity = '1'; });
+            toggleBtn.disabled = false;
+          }, chipEls.length * 55 + 100);
+        }));
+      }, 300);
+    }
+  });
+
+  skillsContainer.appendChild(card);
+});
+</script>
+</body>
+</html>
