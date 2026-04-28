@@ -11,13 +11,13 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0d1117; --surface: #161b22; --surface-2: #1f2430;
-      --border: rgba(255,255,255,0.08); --border-2: rgba(255,255,255,0.15);
-      --text: #e6edf3; --text-2: #8b949e; --text-3: #484f58;
-      --amber: #e3a008; --amber-bg: rgba(227,160,8,0.12);
-      --blue: #388bfd; --blue-bg: rgba(56,139,253,0.12);
-      --green: #3fb950; --green-bg: rgba(63,185,80,0.12);
-      --red: #f85149; --red-bg: rgba(248,81,73,0.12);
+      --bg: #ffffff; --surface: #f6f8fa; --surface-2: #eaeef2;
+      --border: rgba(31,35,40,0.15); --border-2: rgba(31,35,40,0.25);
+      --text: #1f2328; --text-2: #636c76; --text-3: #9198a1;
+      --amber: #9a6700; --amber-bg: rgba(154,103,0,0.1);
+      --blue: #0550ae; --blue-bg: rgba(5,80,174,0.1);
+      --green: #116329; --green-bg: rgba(17,99,41,0.1);
+      --red: #82071e; --red-bg: rgba(130,7,30,0.1);
     }
     body { font-family:'DM Sans',system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:14px; line-height:1.6; min-height:100vh; }
     .layout { display:grid; grid-template-columns:295px 1fr; min-height:100vh; }
@@ -430,11 +430,11 @@ function getScenarioKey(a, p, e, s) {
 
 // ─── CHART SETUP ─────────────────────────────────────────────────────────────
 const CHART_COLORS = {
-  pen: '#e3a008', emp: '#388bfd', prod: '#3fb950', ineq: '#f85149'
+  pen: '#9a6700', emp: '#0550ae', prod: '#116329', ineq: '#cf222e'
 };
 const charts = {};
-const GRID = 'rgba(255,255,255,0.06)';
-const TICK = 'rgba(255,255,255,0.35)';
+const GRID = 'rgba(31,35,40,0.08)';
+const TICK = 'rgba(31,35,40,0.55)';
 
 function chartOpts(color, mn, mx) {
   return {
