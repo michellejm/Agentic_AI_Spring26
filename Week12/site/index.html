@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Workforce Dynamics Simulator · 2024–2044</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117; --surface: #161b22; --surface-2: #1f2430;
+      --border: rgba(255,255,255,0.08); --border-2: rgba(255,255,255,0.15);
+      --text: #e6edf3; --text-2: #8b949e; --text-3: #484f58;
+      --amber: #e3a008; --amber-bg: rgba(227,160,8,0.12);
+      --blue: #388bfd; --blue-bg: rgba(56,139,253,0.12);
+      --green: #3fb950; --green-bg: rgba(63,185,80,0.12);
+      --red: #f85149; --red-bg: rgba(248,81,73,0.12);
+    }
+    body { font-family:'DM Sans',system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:14px; line-height:1.6; min-height:100vh; }
+    .layout { display:grid; grid-template-columns:295px 1fr; min-height:100vh; }
+    .sidebar { background:var(--surface); border-right:1px solid var(--border); padding:1.5rem; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; gap:1.75rem; }
+    .sidebar::-webkit-scrollbar { width:4px; }
+    .sidebar::-webkit-scrollbar-thumb { background:var(--border-2); border-radius:2px; }
+    .brand-name { font-family:'Fraunces',Georgia,serif; font-size:21px; font-weight:500; line-height:1.15; letter-spacing:-0.02em; }
+    .brand-name em { color:var(--amber); font-style:normal; }
+    .brand-meta { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.12em; margin-top:5px; }
+    .block-label { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:12px; }
+    .sliders { display:flex; flex-direction:column; gap:16px; }
+    .slider-top { display:flex; justify-content:space-between; margin-bottom:7px; }
+    .slider-name { font-size:12px; color:var(--text-2); }
+    .slider-num { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--amber); font-weight:500; }
+    input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:3px; background:var(--border-2); border-radius:2px; outline:none; cursor:pointer; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:13px; height:13px; border-radius:50%; background:var(--amber); cursor:pointer; transition:transform 0.15s,box-shadow 0.15s; }
+    input[type=range]:hover::-webkit-slider-thumb { transform:scale(1.25); box-shadow:0 0 0 4px rgba(227,160,8,0.2); }
+    .slider-ends { display:flex; justify-content:space-between; margin-top:4px; font-size:10px; color:var(--text-3); font-family:'JetBrains Mono',monospace; }
+    .metrics { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .m-card { background:var(--surface-2); border-radius:8px; padding:10px 12px; border:1px solid var(--border); }
+    .m-label { font-size:9px; font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-3); margin-bottom:4px; }
+    .m-val { font-size:21px; font-family:'JetBrains Mono',monospace; font-weight:500; line-height:1; }
+    .m-val.amber { color:var(--amber); } .m-val.blue { color:var(--blue); } .m-val.green { color:var(--green); } .m-val.red { color:var(--red); }
+    .sc-badge { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.12em; padding:3px 8px; border-radius:3px; margin-bottom:8px; }
+    .sc-badge.red { background:var(--red-bg); color:var(--red); } .sc-badge.green { background:var(--green-bg); color:var(--green); } .sc-badge.blue { background:var(--blue-bg); color:var(--blue); } .sc-badge.amber { background:var(--amber-bg); color:var(--amber); }
+    .sc-name { font-family:'Fraunces',Georgia,serif; font-size:16px; font-weight:500; line-height:1.25; margin-bottom:8px; }
+    .sc-desc { font-size:12px; color:var(--text-2); line-height:1.65; }
+    .main { padding:1.75rem; display:flex; flex-direction:column; gap:1.75rem; }
+    .main-hed { padding-bottom:1rem; border-bottom:1px solid var(--border); }
+    .main-title { font-family:'Fraunces',Georgia,serif; font-size:24px; font-weight:300; font-style:italic; color:var(--text-2); line-height:1.2; }
+    .main-title strong { color:var(--text); font-weight:500; font-style:normal; }
+    .main-sub { font-size:11px; color:var(--text-3); margin-top:4px; font-family:'JetBrains Mono',monospace; letter-spacing:0.04em; }
+    .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .chart-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1rem 1.1rem; }
+    .chart-hed { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .chart-name { font-size:11px; color:var(--text-3); font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.1em; }
+    .chart-val-sm { font-size:13px; font-family:'JetBrains Mono',monospace; font-weight:500; }
+    .chart-wrap { position:relative; height:155px; }
+    .section-hed { display:flex; align-items:baseline; gap:12px; margin-bottom:1rem; flex-wrap:wrap; }
+    .section-title { font-family:'Fraunces',Georgia,serif; font-size:20px; font-weight:500; }
+    .section-sub { font-size:12px; color:var(--text-2); }
+    .primary-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem; }
+    .analogy-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1.25rem; display:flex; flex-direction:column; gap:10px; transition:border-color 0.25s; }
+    .analogy-card.lead { border-left:2px solid var(--amber); }
+    .a-period { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--amber); text-transform:uppercase; letter-spacing:0.12em; }
+    .a-title { font-family:'Fraunces',Georgia,serif; font-size:15px; font-weight:500; line-height:1.3; color:var(--text); }
+    .a-body { font-size:12px; color:var(--text-2); line-height:1.68; }
+    .a-outcome { background:var(--surface-2); border-radius:6px; padding:9px 11px; font-size:11px; color:var(--text-2); line-height:1.6; border-left:2px solid var(--border-2); }
+    .outcome-label { font-family:'JetBrains Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-3); display:block; margin-bottom:4px; }
+    .dim-section-label { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:10px; }
+    .dim-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .dim-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:1rem; transition:border-color 0.25s; }
+    .dim-top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .dim-dim { font-size:10px; color:var(--text-3); font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.1em; }
+    .dim-tag { font-family:'JetBrains Mono',monospace; font-size:9px; padding:2px 7px; border-radius:3px; text-transform:uppercase; letter-spacing:0.08em; }
+    .dim-tag.amber { background:var(--amber-bg); color:var(--amber); } .dim-tag.blue { background:var(--blue-bg); color:var(--blue); } .dim-tag.green { background:var(--green-bg); color:var(--green); } .dim-tag.red { background:var(--red-bg); color:var(--red); }
+    .dim-title { font-size:13px; font-weight:500; color:var(--text); margin-bottom:6px; }
+    .dim-text { font-size:11px; color:var(--text-2); line-height:1.65; }
+    .footer { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-3); text-align:center; padding:1.25rem; border-top:1px solid var(--border); line-height:2; }
+    @media(max-width:960px) {
+      .layout { grid-template-columns:1fr; }
+      .sidebar { position:static; height:auto; }
+      .charts-grid, .primary-grid, .dim-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div>
+      <div class="brand-name">AI Workforce<br><em>Dynamics</em></div>
+      <div class="brand-meta">2024 — 2044 simulation</div>
+    </div>
+
+    <div>
+      <div class="block-label">Parameters</div>
+      <div class="sliders">
+        <div>
+          <div class="slider-top"><span class="slider-name">Adoption Speed</span><span class="slider-num" id="v-a">3</span></div>
+          <input type="range" id="s-a" min="1" max="5" step="1" value="3">
+          <div class="slider-ends"><span>glacial</span><span>explosive</span></div>
+        </div>
+        <div>
+          <div class="slider-top"><span class="slider-name">Sector Exposure</span><span class="slider-num" id="v-e">3</span></div>
+          <input type="range" id="s-e" min="1" max="5" step="1" value="3">
+          <div class="slider-ends"><span>few jobs</span><span>all jobs</span></div>
+        </div>
+        <div>
+          <div class="slider-top"><span class="slider-name">Policy Response</span><span class="slider-num" id="v-p">3</span></div>
+          <input type="range" id="s-p" min="1" max="5" step="1" value="3">
+          <div class="slider-ends"><span>hands-off</span><span>interventionist</span></div>
+        </div>
+        <div>
+          <div class="slider-top"><span class="slider-name">Safety Net</span><span class="slider-num" id="v-s">3</span></div>
+          <input type="range" id="s-s" min="1" max="5" step="1" value="3">
+          <div class="slider-ends"><span>absent</span><span>comprehensive</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="block-label">2044 Projections</div>
+      <div class="metrics">
+        <div class="m-card"><div class="m-label">Penetration</div><div class="m-val amber" id="m-pen">—</div></div>
+        <div class="m-card"><div class="m-label">Employment</div><div class="m-val blue" id="m-emp">—</div></div>
+        <div class="m-card"><div class="m-label">Productivity</div><div class="m-val green" id="m-prod">—</div></div>
+        <div class="m-card"><div class="m-label">Inequality</div><div class="m-val red" id="m-ineq">—</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="block-label">Active Scenario</div>
+      <span class="sc-badge" id="sc-badge"></span>
+      <div class="sc-name" id="sc-name"></div>
+      <div class="sc-desc" id="sc-desc"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="main-hed">
+      <div class="main-title"><em>What happens to work</em> <strong>when agents arrive?</strong></div>
+      <div class="main-sub">Systems dynamics model · 20-year horizon · adjust parameters to explore scenarios · all analogies hardcoded, no API calls</div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-hed"><span class="chart-name">Agent Penetration %</span><span class="chart-val-sm" id="cv-pen" style="color:var(--amber)"></span></div>
+        <div class="chart-wrap"><canvas id="ch-pen" role="img" aria-label="Agent penetration 2024-2044">Agent penetration 2024–2044</canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-hed"><span class="chart-name">Employment Index (base 100)</span><span class="chart-val-sm" id="cv-emp" style="color:var(--blue)"></span></div>
+        <div class="chart-wrap"><canvas id="ch-emp" role="img" aria-label="Employment index 2024-2044">Employment 2024–2044</canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-hed"><span class="chart-name">Productivity Index (base 100)</span><span class="chart-val-sm" id="cv-prod" style="color:var(--green)"></span></div>
+        <div class="chart-wrap"><canvas id="ch-prod" role="img" aria-label="Productivity index 2024-2044">Productivity 2024–2044</canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-hed"><span class="chart-name">Inequality Index (base 38)</span><span class="chart-val-sm" id="cv-ineq" style="color:var(--red)"></span></div>
+        <div class="chart-wrap"><canvas id="ch-ineq" role="img" aria-label="Inequality index 2024-2044">Inequality 2024–2044</canvas></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-hed">
+        <div class="section-title">Historical Analogies</div>
+        <div class="section-sub" id="analogy-subtitle"></div>
+      </div>
+      <div class="primary-grid" id="primary-analogies"></div>
+      <div class="dim-section-label" style="margin-top:1.25rem;">By parameter — what each of your settings most closely resembles</div>
+      <div class="dim-grid" id="dim-analogies"></div>
+    </div>
+
+    <div class="footer">
+      Model informed by: Acemoglu &amp; Restrepo (2022) · Autor, Levy &amp; Murnane (2003) · Brynjolfsson &amp; McAfee (2014)<br>
+      Frey &amp; Osborne (2013) · Goldin &amp; Katz (2008) · Milanovic (2016) · Autor, Dorn &amp; Hanson (2013)<br>
+      <span style="color:var(--text-3)">Not a forecast — for exploratory scenario analysis only · no external API calls · fully static</span>
+    </div>
+  </main>
+</div>
+
+<script>
+// ─── SCENARIO DATABASE ───────────────────────────────────────────────────────
+const SCENARIOS = {
+  'disruption-unchecked': {
+    name: 'Disruption Unchecked',
+    badge: 'High risk', color: 'red',
+    desc: 'Rapid adoption sweeps highly exposed sectors with no policy cushion or safety net. Productivity surges while employment and social stability deteriorate. Historical precedent suggests this trajectory generates the conditions for eventual political rupture — gains are real but captured by a narrow tier.',
+    analogies: [
+      {
+        period: '1750 – 1850',
+        title: 'English Agricultural Enclosures',
+        body: 'Parliamentary enclosures privatized 6.8 million acres of common land, raising agricultural productivity dramatically. Displaced smallholders and landless laborers flooded cities with no support mechanism. Real wages stagnated for 60 years despite rising GDP — what economic historians call the "Engels Pause." Factory productivity rose; worker living standards did not.',
+        outcome: 'Net outcome: ~80 years of immiseration before the industrial system raised living standards broadly. The political pressure of this period generated Chartism, the trade union movement, and the framework for the 20th-century welfare state. Structural transformation without redistribution eventually forces redistribution — at much higher political cost.'
+      },
+      {
+        period: '1880 – 1910',
+        title: 'The American Gilded Age',
+        body: 'Railroad, steel, and electrical technology transformed virtually every sector of the US economy in one generation. Monopoly formation was rapid, labor protections nonexistent, and inequality reached levels not seen again until the 21st century. Carnegie, Rockefeller, and Morgan captured unprecedented shares of GDP. The gains were real — US output grew enormously — but were concentrated almost entirely in capital.',
+        outcome: 'Net outcome: Culminated in Progressive Era antitrust legislation, labor organizing, and eventually the New Deal. The political instability of this distribution was the forcing function for the entire American welfare state. The lesson: societies tolerate extraction up to a threshold, then restructure — usually through crisis, not design.'
+      },
+      {
+        period: '1990 – 2010',
+        title: "Guangdong's Rapid Industrialization",
+        body: "China's Pearl River Delta industrialized faster than any region in history — productivity gains were unprecedented, labor protections minimal, and safety nets absent. Over 150 million rural workers migrated into factory work. The Gini coefficient rose faster than any major economy had recorded before beginning a slow reversal.",
+        outcome: "Net outcome: Lifted hundreds of millions out of extreme poverty in aggregate, but with decades of suppressed wages, restricted labor rights, and the hukou system excluding migrants from urban services. A bargain between aggregate growth and distributional justice that China is still renegotiating — and a reminder that high-speed adoption without cushioning creates long-tail political costs."
+      }
+    ]
+  },
+
+  'managed-transition': {
+    name: 'Managed Transition',
+    badge: 'Balanced', color: 'green',
+    desc: 'Rapid agent adoption paired with strong policy response. The historical template for making structural transformation broadly beneficial rather than narrowly extractive. Politically difficult to maintain, but the model that produced the postwar middle class and the most durable social contracts of the 20th century.',
+    analogies: [
+      {
+        period: '1944 – 1965',
+        title: 'The GI Bill and the American Middle Class',
+        body: 'The Servicemen\'s Readjustment Act funded college for 8 million veterans, provided low-interest mortgages, and included unemployment insurance. It coincided with rapid technological change in manufacturing and civilian infrastructure. The result was the fastest and most broad-based middle-class expansion in recorded history — the period Galbraith called "the affluent society."',
+        outcome: 'Net outcome: US homeownership rose from 44% to 62% in 15 years. The college-educated workforce tripled. Productivity gains were distributed through wages rather than captured by capital. This was not accidental — it required deliberate policy sustained across two presidential administrations and strong labor institutions to enforce the distribution.'
+      },
+      {
+        period: '1990s – 2000s',
+        title: 'Danish Flexicurity',
+        body: "Denmark combined easy hiring and firing with 90% income replacement for two years and mandatory active retraining — workers are protected, not jobs. This produced the highest labor market mobility in the OECD alongside among the lowest structural unemployment. The model was specifically designed for rapid sectoral transformation: firms can adapt quickly; workers have a genuine floor.",
+        outcome: 'Net outcome: Denmark navigated multiple technology transitions — internet, manufacturing automation, offshoring — without the wage polarization seen in the US or UK. The political coalition held because transition costs were genuinely socialized. The lesson: high policy + high adoption can be better than low adoption, because the transition happens on managed terms rather than chaotic ones.'
+      },
+      {
+        period: '1983 – 2000',
+        title: "Germany's Reunification Management",
+        body: "East German industrial collapse after reunification could have been catastrophic — it was the equivalent of shutting down an entire economy overnight. The Federal Republic responded with Kurzarbeit (short-time work subsidies), massive transfer payments, and systematic retraining investment. Painful and expensive, but it largely avoided the social fracture seen in UK post-coal communities.",
+        outcome: "Net outcome: East-West income convergence has been slow (still not complete) but persistent and measurable. The communities that received active labor market policy fared measurably better than those that did not. The cost was high — roughly €1.3 trillion over 30 years — but it bought social stability in a region that could have become Europe's rust belt."
+      }
+    ]
+  },
+
+  'cautious-innovation': {
+    name: 'Cautious Innovation',
+    badge: 'Conservative', color: 'blue',
+    desc: 'Slow adoption paired with proactive policy and strong safety nets. Workers adapt ahead of disruption; inequality is stable. The main risk is competitive and dynamic: firms that move slowly cede ground to faster-moving rivals, and sectors that should have restructured remain propped up by institutional inertia.',
+    analogies: [
+      {
+        period: '1880s',
+        title: "Bismarck's Preemptive Welfare State",
+        body: "Otto von Bismarck introduced health insurance (1883), accident insurance (1884), and old-age pensions (1889) — not in response to a crisis, but preemptively, to stabilize industrialization and undercut socialist organizing. Germany industrialized later and more slowly than Britain but with substantially less social rupture. Policy created the political conditions for further change.",
+        outcome: "Net outcome: German workers entered the 20th century with institutional buffers British and American workers lacked. This arguably gave Germany the social coherence to recover from WWI more quickly and to resist the worst labor market shocks of the 1920s longer than peer economies. Preemptive policy is cheaper than reactive policy — a lesson most democratic systems find structurally difficult to act on."
+      },
+      {
+        period: '1990s',
+        title: "Japan's Managed Technological Stagnation",
+        body: "Japanese firms responded to post-bubble recession and automation pressure by absorbing surplus labor into reduced-productivity roles rather than laying workers off. Lifetime employment norms slowed displacement; the safety net — largely corporate rather than state — held. Productivity growth lagged significantly behind the US and Germany over 20 years.",
+        outcome: "Net outcome: Japan avoided the wage polarization of the US, but also sacrificed dynamic reallocation of labor toward productive uses. The 'lost decade' became two. Low adoption + strong institutional inertia has real costs: firms that should have restructured did not; sectors that should have grown were starved of talent. Stability and dynamism trade off at the extremes."
+      },
+      {
+        period: '1980s – 2000s',
+        title: "France's Technological Exception",
+        body: "France's internet and digital adoption lagged the US and UK by 5–8 years — partly due to the Minitel network providing an adequate substitute, partly cultural resistance, partly labor law that made rapid restructuring expensive. Strong safety nets meant displacement costs were absorbed. Productivity gains came slower; social disruption was minimal.",
+        outcome: "Net outcome: French workers experienced less acute displacement than British or American counterparts during equivalent technology transitions. The cost was visible in competitiveness metrics and in the long-run productivity gap with the US. The French model trades growth rate for stability — a coherent choice with real trade-offs, not an error."
+      }
+    ]
+  },
+
+  'gradual-drift': {
+    name: 'Gradual Drift',
+    badge: 'Low velocity', color: 'blue',
+    desc: 'Slow adoption, minimal intervention. Disruption is low-drama but structural change accumulates without preparation. By 2044 the economy looks transformed — largely by accident, with decisions made by default rather than design. The historical pattern for this combination is chronic community damage with deferred political reckoning.',
+    analogies: [
+      {
+        period: '1970 – 2005',
+        title: "The American Rust Belt's Slow Unraveling",
+        body: "Manufacturing decline in the US Midwest happened gradually enough that no single year was a crisis — but over 35 years, community employment bases hollowed out. Policy was minimal and reactive. Affected communities absorbed the damage quietly, showing up in health statistics, educational attainment, and social indicators before it became visible in political behavior.",
+        outcome: "Net outcome: Autor, Dorn, and Hanson's 'China shock' research found that in highly affected counties, elevated unemployment, depressed wages, and excess opioid mortality persisted 20 years after peak displacement. Gradual drift doesn't mean small impact — it means delayed reckoning with compounded interest. The political consequences arrived in 2016, 40 years after the economic process began."
+      },
+      {
+        period: '1975 – 2000',
+        title: "UK Deindustrialization Without a Plan",
+        body: "British steel, coal, and shipbuilding declined across two decades under both Labour and Conservative governments without a coherent retraining or community reinvestment strategy. The Thatcher government accelerated what had been gradual drift into acute dislocation, but the underlying structural decline preceded her tenure and continues decades after it.",
+        outcome: "Net outcome: Former industrial communities in Wales, Yorkshire, and Northeast England remain measurably poorer than the national average 45 years later. Path dependencies created by unmanaged drift are very expensive to reverse: the skills base erodes, social capital dissolves, young people leave, and the area becomes structurally unable to attract investment even when policy eventually changes."
+      },
+      {
+        period: '1950s – present',
+        title: "Italy's Mezzogiorno Divergence",
+        body: "Southern Italy's economic divergence from the north is one of the longest-running unmanaged transitions in the developed world — slow, low-drama, chronic, and largely unaddressed by policy. Multiple plans and interventions failed to alter the structural trajectory. Low adoption of productivity-enhancing technology, minimal labor market flexibility, and welfare spending that sustained consumption without investment.",
+        outcome: "Net outcome: The Italian south has remained roughly 40–50% less productive than the north for 70 years, despite enormous EU and national transfers. Gradual drift with inadequate policy doesn't resolve — it equilibrates at a lower level. The counterfactual (managed transition) was always available and never taken."
+      }
+    ]
+  },
+
+  'fast-fragmented': {
+    name: 'Fast & Fragmented',
+    badge: 'Volatile', color: 'amber',
+    desc: 'Rapid adoption with partial policy response. Productivity surges. The distributional question — who captures the gains — becomes the dominant political contest of the era. Historical precedent suggests real aggregate growth alongside real inequality growth and political instability in the middle decade.',
+    analogies: [
+      {
+        period: '1993 – 2008',
+        title: "Globalization's Uneven Dividend",
+        body: "NAFTA (1994), the WTO Uruguay Round, and China's WTO accession (2001) created the fastest global integration in history alongside moderate policy responses — Trade Adjustment Assistance existed but was chronically underfunded. US GDP grew substantially. Manufacturing workers in exposed sectors saw wages and employment collapse. Service and professional workers prospered. The gains were real and unequally distributed.",
+        outcome: "Net outcome: Branko Milanovic's 'elephant curve' shows the distribution — global middle class and global top 1% gained strongly; Western working-middle class stagnated. The partial policy response was enough to prevent acute crisis but insufficient to maintain the social coalition for openness. The political backlash arrived 15–20 years after the economic change, in the 2016–2020 electoral disruptions across the Atlantic democracies."
+      },
+      {
+        period: '1995 – 2005',
+        title: 'The First Internet Wave',
+        body: "Internet adoption transformed media, retail, travel, finance, and communications in roughly a decade. Policy lagged by design — 'the internet should be free from regulation' was bipartisan US consensus. Enormous wealth creation for the technically skilled; displacement for travel agents, music industry workers, print journalists, and stockbrokers. The dot-com crash redistributed paper gains but the structural transformation was permanent.",
+        outcome: "Net outcome: Long-run GDP and productivity gains were substantial and well-documented. The winner-take-most dynamics of platform economics were established in this period without countervailing policy — decisions made in the 1990s about network ownership and data rights still shape the economy today. Fast adoption + fragmented policy creates durable structural features that are difficult to undo later."
+      },
+      {
+        period: '1986',
+        title: "UK Financial Deregulation (Big Bang)",
+        body: "The rapid deregulation of London's financial sector in October 1986 transformed the City in a matter of months — the fastest sectoral transformation of a major industry in peacetime British history. Productivity and output soared. Inequality in London relative to the rest of the UK widened dramatically and persistently. Policy response was sectoral-specific and largely absent for affected workers.",
+        outcome: "Net outcome: London became one of the world's two dominant financial centers. UK financial sector output grew from ~5% to ~10% of GDP. Regional inequality between London and the rest of England is now the highest of any large European country. Fast transformation in a high-exposure sector, with minimal redistribution of the gains, creates durable geographic inequality."
+      }
+    ]
+  },
+
+  'polarization-risk': {
+    name: 'Polarization Risk',
+    badge: 'Watch closely', color: 'amber',
+    desc: 'High job exposure meets weak redistribution. The middle of the labor market hollows out — a continuation and acceleration of the task-biased technological change pattern documented since 1980. The economy grows; the labor force bifurcates into high-skill/high-pay and low-skill/low-pay with the middle disappearing.',
+    analogies: [
+      {
+        period: '1980 – 2015',
+        title: "The Great Hollowing Out (Autor's Task Framework)",
+        body: "Computerization automated routine cognitive tasks (bookkeeping, data entry, filing) and routine manual tasks (assembly, sorting) while complementing both high-skill analytical work and low-skill manual/interpersonal work. The US middle-skill occupational share fell from 52% to 42% of employment over 35 years. Real wages for non-college workers fell in absolute terms. Income inequality returned to Gilded Age levels.",
+        outcome: "Net outcome: This is the empirically documented baseline from actual computerization. Agent adoption with high exposure and weak redistribution is this pattern amplified — the same hollowing accelerates, now reaching professional and managerial work that survived computerization. The 2015 distribution is the floor; the question is how much further the middle falls."
+      },
+      {
+        period: '1940s – 1970s',
+        title: "Mechanization of Southern Agricultural Labor",
+        body: "The mechanical cotton picker (patented 1942, widespread by 1960) displaced an estimated 2 million sharecroppers over two decades. No managed transition existed. The result was the Great Migration — 6 million Black Americans moved to northern cities over 40 years, where they encountered labor markets without jobs suited to their agricultural skills and housing markets designed to exclude them.",
+        outcome: "Net outcome: Created the structural conditions for concentrated urban poverty that persist to the present day. High sectoral exposure (one industry that was the economic base for entire regions), zero safety net, and no policy response compounded pre-existing racial inequality in ways that proved very difficult to reverse. Technology interacting with inequality concentrates damage in the already-disadvantaged."
+      },
+      {
+        period: '2000 – 2020',
+        title: "The China Trade Shock and Community Damage",
+        body: "Autor, Dorn, and Hanson's systematic research across US counties showed that communities most exposed to Chinese import competition showed persistent elevated unemployment, lower wages, higher disability claims, increased opioid mortality, and political radicalization — all measurably above comparable non-exposed communities — 15–20 years after the initial shock. Trade Adjustment Assistance reached only a fraction of affected workers.",
+        outcome: "Net outcome: The best-documented contemporary case of high sectoral exposure with weak policy response. The long-tail damage to communities significantly exceeded the short-term displacement cost — once communities lose critical mass in an industry, they lose the social infrastructure (suppliers, training networks, employer density) that would allow recovery. Polarization creates self-reinforcing paths."
+      }
+    ]
+  },
+
+  'baseline-path': {
+    name: 'Baseline Path',
+    badge: 'Moderate', color: 'blue',
+    desc: 'Moderate adoption, mixed exposure, partial policy response. The most historically common pattern for major technology transitions. Net positive over a 20-year horizon, with a turbulent middle decade for workers in directly exposed roles. The email and spreadsheet analogy applies — disruption is real and localized, not systemic.',
+    analogies: [
+      {
+        period: '1979 – 1995',
+        title: 'The Spreadsheet and the Office',
+        body: 'VisiCalc (1979) and later Excel transformed bookkeeping, accounting, and financial analysis over roughly 15 years. The number of bookkeepers declined significantly while accountants and financial analysts grew. The transition was slow enough that most displaced workers retired naturally or shifted adjacent roles. The net productivity gain was enormous; the political salience was near zero.',
+        outcome: 'Net outcome: The canonical case where a technology "creates more jobs than it destroys" — but the distribution of new jobs (requiring college education) was narrower than the distribution of destroyed ones (requiring only arithmetic). The income premium to education widened measurably through this period. Growth was real; so was the structural shift in who got to benefit from it.'
+      },
+      {
+        period: '1890 – 1930',
+        title: 'Electrification of American Manufacturing',
+        body: 'Electric motors replaced steam power in factories over 40 years. The adoption curve was gradual, exposure was broad, and policy was minimal — but so was acute disruption. The transition was slow enough for occupational turnover to do most of the adjustment work. Steam engineers, gas-fitters, and boiler tenders found adjacent trades. Paul David\'s research showed productivity gains emerged fully only 40 years after electrification began.',
+        outcome: 'Net outcome: One of the most productivity-enhancing transitions in history, with relatively contained social cost — largely because the 40-year timeline allowed generational turnover rather than forced displacement. The critical lesson: the same technology at higher speed (as in forced rapid electrification of Soviet industry in the 1930s) produced massive human cost. Speed, not technology, is the key variable.'
+      },
+      {
+        period: '1969 – 1990',
+        title: 'ATMs and the Expansion of Bank Tellers',
+        body: "ATM introduction might be expected to have decimated bank teller employment — but the number of tellers increased over this period. Lower transaction costs enabled bank branch expansion; branches needed tellers; tellers shifted toward relationship banking and complex transactions. James Bessen's research documented this as a canonical case of technology augmenting rather than replacing a role — but only because adoption was limited to routine transactions.",
+        outcome: 'Net outcome: The augmentation pattern holds when automation targets a subtask rather than a whole role. As agent capabilities expand from narrow to general — from processing transactions to relationship management — the augmentation assumption weakens. The ATM story works as a baseline analogy; it stops working when the technology scope matches your sector exposure setting.'
+      }
+    ]
+  }
+};
+
+// ─── DIMENSION ANALOGY DATABASE ──────────────────────────────────────────────
+const DIMS = {
+  adoption: {
+    1: { tag:'Glacial', color:'blue', title:"France's Minitel Delay", text:"France's Minitel network (1982) paradoxically slowed internet adoption by a decade — users had an adequate alternative and cultural resistance was strong. Glacial adoption gives workers and institutions maximum adaptation time but may cede strategic ground to faster-moving competitors and economies. The question is whether the extra time is used for preparation or complacency." },
+    2: { tag:'Measured', color:'blue', title:"Electrification's 40-Year Arc", text:"US factory electrification took roughly 48 years (1882–1930) from Edison's Pearl Street Station to near-complete manufacturing adoption. This pace allowed occupational turnover to do most adjustment work: affected workers retired rather than being displaced. Paul David showed productivity gains only emerged after 40 years — slow adoption delays both the disruption and the benefit." },
+    3: { tag:'Moderate', color:'blue', title:'The PC Revolution, 15 Years', text:"Personal computing went from hobbyist tool (1975) to mainstream business instrument (~1990) over roughly 15 years — fast enough to create visible displacement, slow enough for policy systems to partially respond. Typists, draftsmen, and bookkeepers saw their roles decline over a career timespan rather than a quarter. This is the historically 'normal' speed for transformative technology." },
+    4: { tag:'Rapid', color:'amber', title:'Smartphone Adoption: 8 Years to Ubiquity', text:"US smartphone penetration went from ~10% (2008) to ~80% (2016). Entire industries — taxis, physical maps, cameras, alarm clocks, printed travel guides — were disrupted before incumbents could adapt. Regulatory frameworks lagged by 5–10 years. At speed 4, institutional response capacity is consistently outpaced by the technology itself." },
+    5: { tag:'Explosive', color:'red', title:'COVID Remote Work: 6 Weeks', text:"A decade of projected remote-work adoption happened in six weeks in March–April 2020. This demonstrated that explosive adoption is possible — but also brutally exposed who bears transition costs. Knowledge workers thrived; service workers, caregivers, and those without reliable home internet were devastated. Compressed timelines amplify pre-existing inequality by removing the time needed for equitable adjustment." }
+  },
+  exposure: {
+    1: { tag:'Narrow', color:'green', title:'ATMs and Bank Tellers', text:"ATM introduction was scoped to one function within one industry. The number of bank tellers actually increased after ATMs as lower transaction costs enabled branch expansion and role complexity. Narrow exposure allows sector-specific adaptation strategies — regulatory sandboxes, targeted retraining, union negotiation — that work precisely because the affected population is bounded and identifiable." },
+    2: { tag:'Limited', color:'green', title:'CAD/CAM in Design Professions', text:"Computer-aided design transformed architecture, engineering, and manufacturing design without rippling into most of the economy. Affected workers (architectural drafters, mechanical drafters) had clear adjacent paths — they became BIM specialists and computational designers. Limited exposure allows for targeted policy and makes the transition tractable without systemic intervention." },
+    3: { tag:'Moderate', color:'blue', title:"The Internet's First Decade", text:"The internet's first decade (1995–2005) significantly transformed retail, media, travel, and financial services — perhaps 30–40% of employment — while leaving healthcare, construction, education, and personal services largely intact. Mixed exposure creates winners, losers, and a large buffer of unaffected sectors that can absorb displaced workers through normal labor market flows." },
+    4: { tag:'High', color:'amber', title:"Industrial Revolution's Sectoral Sweep", text:"Steam power eventually touched textiles, mining, metallurgy, transportation, and agriculture — the majority of 19th-century employment. No single retraining program or policy lever worked across all affected sectors. High exposure requires coordinated, multi-sector policy responses that are historically difficult to design, fund, and sustain. When most sectors are simultaneously disrupted, the 'adjacent field' escape valve closes." },
+    5: { tag:'Near-total', color:'red', title:'Agricultural-to-Industrial Transition', text:"The 150-year transition from agricultural to industrial economy eventually reshaped virtually every occupation — even professions that used no machines directly were transformed by the new economic context. Near-total exposure means there is no 'safe harbor' sector, no adjacent field unaffected enough to absorb displaced workers. This configuration has no close modern precedent and requires policy of a scale and coherence rarely achieved in democratic systems." }
+  },
+  policy: {
+    1: { tag:'Hands-off', color:'red', title:'The Combination Acts, 1799', text:"Britain's Combination Acts banned trade unions at the peak of industrial disruption. Workers had no legal mechanism to negotiate transition, share productivity gains, or cushion displacement. Real wages stagnated for 60 years despite rising GDP — the 'Engels Pause.' The absence of policy is not neutral; it is a policy choice whose distributional consequences are predictable and historically documented." },
+    2: { tag:'Minimal', color:'amber', title:'US Trade Adjustment Assistance', text:"TAA (created 1962) was the primary US policy response to trade-driven displacement — and it failed. Chronically underfunded and administratively complex, Autor et al. found it reached only a fraction of displaced manufacturing workers in China-shock-affected counties. Minimal policy that exists on paper but doesn't scale to need may be worse than acknowledged absence: it creates an illusion of a safety net while providing little actual protection." },
+    3: { tag:'Moderate', color:'blue', title:'The GI Bill with Exclusions', text:"The 1944 GI Bill was generous for eligible veterans but systematically excluded Black veterans in the South through local administration. A targeted, well-funded program that reaches some affected workers but not others reduces overall polarization while leaving specific groups behind — and often entrenches the inequalities it was meant to address. Medium policy is better than none but rarely sufficient for high-disruption scenarios." },
+    4: { tag:'Active', color:'green', title:'German Kurzarbeit', text:"Germany's short-time work scheme subsidized employers to reduce worker hours rather than lay off during the 2008–09 financial crisis. German unemployment peaked at 5.1% versus 10% in the US over the same period. Active policy that addresses the mechanism of displacement — firm-level labor decisions — rather than just the downstream outcome is structurally more effective and substantially cheaper than reactive intervention." },
+    5: { tag:'Interventionist', color:'green', title:'Danish Flexicurity at Full Deployment', text:"Denmark's model combines easy hire/fire (low job security) with 90% income replacement for two years, mandatory active retraining, and affordable childcare enabling labor force participation. Workers are protected; jobs are not. Result: the highest labor mobility in the OECD, persistent low structural unemployment, and smooth navigation of every major technology transition of the past 30 years. The most evidence-backed high-policy template available to democratic societies." }
+  },
+  safety: {
+    1: { tag:'Absent', color:'red', title:'Pre-New Deal America, 1929', text:"No federal unemployment insurance, no Social Security, no bank deposit guarantees. The 1929 financial crisis triggered bank runs, farm foreclosures, mass evictions, and Hoovervilles. The absence of automatic stabilizers converted a financial recession into a decade-long social catastrophe. A safety net is most visible — and most missed — when it is absent: the floor only matters when you fall." },
+    2: { tag:'Weak', color:'amber', title:'Post-1996 US Welfare Reform Under Stress', text:"The 1996 reform replaced AFDC with TANF: time limits, work requirements, block grants. In the strong economy of the late 1990s it reduced caseloads. In the 2008–09 recession it failed — caseloads barely rose while unemployment doubled, meaning the safety net no longer responded to need. A safety net that works in good times but not during structural shocks provides false security rather than genuine cushioning." },
+    3: { tag:'Moderate', color:'blue', title:'UK Welfare State Under Deindustrialization', text:"The UK's postwar welfare state was adequate in stable conditions but showed structural strain under the 1970s–80s employment shocks of deindustrialization. Long-term benefit dependency became entrenched in former mining communities — not because benefits were too generous, but because no retraining or reinvestment accompanied them. Safety net without active labor market policy becomes a holding pattern rather than a reintegration mechanism." },
+    4: { tag:'Strong', color:'green', title:"Sweden's Automation Cushion", text:"Sweden's comprehensive system — universal healthcare, unemployment insurance, free retraining, affordable childcare — allowed workers to take career risks because the downside was genuinely bounded. When Swedish manufacturing automated heavily in the 1990s, displaced workers had real reentry paths rather than just formal eligibility for programs. Strong safety nets don't reduce work incentives when paired with genuine retraining investment." },
+    5: { tag:'Comprehensive', color:'green', title:"Norway's Sovereign Wealth Buffer", text:"Norway uses oil revenues to fund universal services, long-term investment, and the most comprehensive safety net in the OECD. Workers can make sectoral transitions without catastrophic downside risk. Structural transformation happens with lower political anxiety because the personal cost of displacement is genuinely low. Comprehensive safety nets don't just protect workers — they make the political economy of necessary change more stable and less violent." }
+  }
+};
+
+// ─── SIMULATION MODEL ─────────────────────────────────────────────────────────
+const YEARS = Array.from({length:21},(_,i)=>2024+i);
+const LABELS = YEARS.map(String);
+
+function simulate(a, p, e, s) {
+  const mid = 2044 - a * 3;
+  const k = 0.18 + a * 0.07;
+  const pen = YEARS.map(y => 100 / (1 + Math.exp(-k * (y - mid))));
+  const ef = e * 0.09;
+  const rr = 0.18 + p * 0.09;
+  const tr = p * 0.035;
+  const sb = s * 0.025;
+  const emp = pen.map(v => Math.max(52, 100 - v * ef * 100 + v * ef * 100 * (rr + tr + sb)));
+  const prod = pen.map(v => 100 + v * 65 * (1 + e * 0.07));
+  const ineq = pen.map(v => Math.min(82, Math.max(26, 38 + v * ef * 38 - v * p * 2.8 - v * s * 1.8)));
+  return { pen, emp, prod, ineq };
+}
+
+function getScenarioKey(a, p, e, s) {
+  if (a >= 4 && p <= 2 && e >= 4) return 'disruption-unchecked';
+  if (a >= 4 && p >= 4) return 'managed-transition';
+  if (a <= 2 && (p >= 4 || s >= 4)) return 'cautious-innovation';
+  if (a <= 2 && p <= 2) return 'gradual-drift';
+  if (a >= 4) return 'fast-fragmented';
+  if (e >= 4 && (p <= 2 || s <= 2)) return 'polarization-risk';
+  return 'baseline-path';
+}
+
+// ─── CHART SETUP ─────────────────────────────────────────────────────────────
+const CHART_COLORS = {
+  pen: '#e3a008', emp: '#388bfd', prod: '#3fb950', ineq: '#f85149'
+};
+const charts = {};
+const GRID = 'rgba(255,255,255,0.06)';
+const TICK = 'rgba(255,255,255,0.35)';
+
+function chartOpts(color, mn, mx) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    animation: { duration: 200 },
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.parsed.y.toFixed(1) } } },
+    scales: {
+      x: { ticks: { autoSkip: true, maxTicksLimit: 7, color: TICK, font: { size: 10, family: "'JetBrains Mono', monospace" } }, grid: { display: false }, border: { color: 'transparent' } },
+      y: { min: mn, max: mx, ticks: { maxTicksLimit: 4, color: TICK, font: { size: 10, family: "'JetBrains Mono', monospace" } }, grid: { color: GRID }, border: { display: false } }
+    }
+  };
+}
+
+function mkChart(id, data, color, mn, mx) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id), {
+    type: 'line',
+    data: {
+      labels: LABELS,
+      datasets: [{ data, borderColor: color, backgroundColor: color + '16', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, fill: true, tension: 0.4 }]
+    },
+    options: chartOpts(color, mn, mx)
+  });
+}
+
+function updateChart(id, data) {
+  charts[id].data.datasets[0].data = data;
+  charts[id].update('none');
+}
+
+// ─── ANALOGY RENDERING ───────────────────────────────────────────────────────
+function renderPrimary(key) {
+  const sc = SCENARIOS[key];
+  const container = document.getElementById('primary-analogies');
+  document.getElementById('analogy-subtitle').textContent = `Scenario: ${sc.name}`;
+  container.innerHTML = sc.analogies.slice(0,2).map((a, i) => `
+    <div class="analogy-card ${i===0?'lead':''}">
+      <div class="a-period">${a.period}</div>
+      <div class="a-title">${a.title}</div>
+      <div class="a-body">${a.body}</div>
+      <div class="a-outcome"><span class="outcome-label">Net outcome</span>${a.outcome}</div>
+    </div>`).join('');
+}
+
+function renderDims(a, p, e, s) {
+  const vals = [
+    { key:'adoption', val:a, label:'Adoption Speed' },
+    { key:'exposure', val:e, label:'Sector Exposure' },
+    { key:'policy', val:p, label:'Policy Response' },
+    { key:'safety', val:s, label:'Safety Net' }
+  ];
+  document.getElementById('dim-analogies').innerHTML = vals.map(({key,val,label}) => {
+    const d = DIMS[key][val];
+    return `<div class="dim-card">
+      <div class="dim-top">
+        <span class="dim-dim">${label}</span>
+        <span class="dim-tag ${d.color}">${d.tag}</span>
+      </div>
+      <div class="dim-title">${d.title}</div>
+      <div class="dim-text">${d.text}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── MAIN REFRESH ────────────────────────────────────────────────────────────
+let initialized = false;
+
+function refresh() {
+  const a = +document.getElementById('s-a').value;
+  const e = +document.getElementById('s-e').value;
+  const p = +document.getElementById('s-p').value;
+  const s = +document.getElementById('s-s').value;
+
+  ['a','e','p','s'].forEach(k => {
+    document.getElementById('v-'+k).textContent = +document.getElementById('s-'+k).value;
+  });
+
+  const d = simulate(a, p, e, s);
+  const L = d.pen.length - 1;
+  const fmt = v => Math.round(v);
+
+  document.getElementById('m-pen').textContent  = fmt(d.pen[L]) + '%';
+  document.getElementById('m-emp').textContent  = fmt(d.emp[L]);
+  document.getElementById('m-prod').textContent = fmt(d.prod[L]);
+  document.getElementById('m-ineq').textContent = fmt(d.ineq[L]);
+
+  document.getElementById('cv-pen').textContent  = fmt(d.pen[L]) + '% by 2044';
+  document.getElementById('cv-emp').textContent  = fmt(d.emp[L]) + ' by 2044';
+  document.getElementById('cv-prod').textContent = fmt(d.prod[L]) + ' by 2044';
+  document.getElementById('cv-ineq').textContent = fmt(d.ineq[L]) + ' by 2044';
+
+  const key = getScenarioKey(a, p, e, s);
+  const sc = SCENARIOS[key];
+  document.getElementById('sc-badge').className = 'sc-badge ' + sc.color;
+  document.getElementById('sc-badge').textContent = sc.badge;
+  document.getElementById('sc-name').textContent = sc.name;
+  document.getElementById('sc-desc').textContent = sc.desc;
+
+  if (!initialized) {
+    mkChart('ch-pen',  d.pen,  CHART_COLORS.pen,  0, 105);
+    mkChart('ch-emp',  d.emp,  CHART_COLORS.emp,  50, 108);
+    mkChart('ch-prod', d.prod, CHART_COLORS.prod, 95, 220);
+    mkChart('ch-ineq', d.ineq, CHART_COLORS.ineq, 22, 86);
+    initialized = true;
+  } else {
+    updateChart('ch-pen',  d.pen);
+    updateChart('ch-emp',  d.emp);
+    updateChart('ch-prod', d.prod);
+    updateChart('ch-ineq', d.ineq);
+  }
+
+  renderPrimary(key);
+  renderDims(a, p, e, s);
+}
+
+window.addEventListener('load', () => {
+  refresh();
+  ['s-a','s-e','s-p','s-s'].forEach(id => document.getElementById(id).addEventListener('input', refresh));
+});
+</script>
+</body>
+</html>
