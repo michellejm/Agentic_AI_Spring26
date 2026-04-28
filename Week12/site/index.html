@@ -19,6 +19,15 @@
       --green: #116329; --green-bg: rgba(17,99,41,0.1);
       --red: #82071e; --red-bg: rgba(130,7,30,0.1);
     }
+    html[data-theme="dark"] {
+      --bg: #0d1117; --surface: #161b22; --surface-2: #1f2430;
+      --border: rgba(255,255,255,0.08); --border-2: rgba(255,255,255,0.15);
+      --text: #e6edf3; --text-2: #8b949e; --text-3: #484f58;
+      --amber: #e3a008; --amber-bg: rgba(227,160,8,0.12);
+      --blue: #388bfd; --blue-bg: rgba(56,139,253,0.12);
+      --green: #3fb950; --green-bg: rgba(63,185,80,0.12);
+      --red: #f85149; --red-bg: rgba(248,81,73,0.12);
+    }
     body { font-family:'DM Sans',system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:14px; line-height:1.6; min-height:100vh; }
     .layout { display:grid; grid-template-columns:295px 1fr; min-height:100vh; }
     .sidebar { background:var(--surface); border-right:1px solid var(--border); padding:1.5rem; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; gap:1.75rem; }
@@ -77,6 +86,9 @@
     .dim-title { font-size:13px; font-weight:500; color:var(--text); margin-bottom:6px; }
     .dim-text { font-size:11px; color:var(--text-2); line-height:1.65; }
     .footer { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-3); text-align:center; padding:1.25rem; border-top:1px solid var(--border); line-height:2; }
+    .theme-btn { background:none; border:1px solid var(--border-2); border-radius:5px; color:var(--text-3); cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.08em; padding:3px 9px; transition:color 0.15s,border-color 0.15s; flex-shrink:0; }
+    .theme-btn:hover { color:var(--text); border-color:var(--text-2); }
+    .brand-row { display:flex; justify-content:space-between; align-items:flex-start; }
     @media(max-width:960px) {
       .layout { grid-template-columns:1fr; }
       .sidebar { position:static; height:auto; }
@@ -89,9 +101,12 @@
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div>
-      <div class="brand-name">AI Workforce<br><em>Dynamics</em></div>
-      <div class="brand-meta">2024 — 2044 simulation</div>
+    <div class="brand-row">
+      <div>
+        <div class="brand-name">AI Workforce<br><em>Dynamics</em></div>
+        <div class="brand-meta">2024 — 2044 simulation</div>
+      </div>
+      <button class="theme-btn" id="theme-toggle" aria-label="Toggle dark mode">Dark</button>
     </div>
 
     <div>
@@ -429,18 +444,32 @@ function getScenarioKey(a, p, e, s) {
 }
 
 // ─── CHART SETUP ─────────────────────────────────────────────────────────────
-const CHART_COLORS = {
-  pen: '#9a6700', emp: '#0550ae', prod: '#116329', ineq: '#cf222e'
-};
+const LIGHT_COLORS = { pen: '#9a6700', emp: '#0550ae', prod: '#116329', ineq: '#cf222e' };
+const DARK_COLORS  = { pen: '#e3a008', emp: '#388bfd', prod: '#3fb950', ineq: '#f85149' };
+const CHART_COLORS = { ...LIGHT_COLORS };
 const charts = {};
-const GRID = 'rgba(31,35,40,0.08)';
-const TICK = 'rgba(31,35,40,0.55)';
+let GRID = 'rgba(31,35,40,0.08)';
+let TICK = 'rgba(31,35,40,0.55)';
 
 function chartOpts(color, mn, mx) {
   return {
     responsive: true, maintainAspectRatio: false,
     animation: { duration: 200 },
-    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + c.parsed.y.toFixed(1) } } },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        mode: 'index', intersect: false,
+        backgroundColor: 'var(--surface)',
+        borderColor: 'var(--border-2)',
+        borderWidth: 1,
+        titleColor: TICK,
+        bodyColor: color,
+        titleFont: { size: 10, family: "'JetBrains Mono', monospace" },
+        bodyFont: { size: 12, family: "'JetBrains Mono', monospace", weight: '500' },
+        padding: 8,
+        callbacks: { label: c => ' ' + c.parsed.y.toFixed(1) }
+      }
+    },
     scales: {
       x: { ticks: { autoSkip: true, maxTicksLimit: 7, color: TICK, font: { size: 10, family: "'JetBrains Mono', monospace" } }, grid: { display: false }, border: { color: 'transparent' } },
       y: { min: mn, max: mx, ticks: { maxTicksLimit: 4, color: TICK, font: { size: 10, family: "'JetBrains Mono', monospace" } }, grid: { color: GRID }, border: { display: false } }
@@ -550,9 +579,40 @@ function refresh() {
   renderDims(a, p, e, s);
 }
 
+function applyTheme(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  const colors = dark ? DARK_COLORS : LIGHT_COLORS;
+  GRID = dark ? 'rgba(255,255,255,0.06)' : 'rgba(31,35,40,0.08)';
+  TICK = dark ? 'rgba(255,255,255,0.35)' : 'rgba(31,35,40,0.55)';
+  Object.assign(CHART_COLORS, colors);
+  Object.entries(charts).forEach(([id, ch]) => {
+    const key = id.replace('ch-', '');
+    const c = colors[key];
+    ch.data.datasets[0].borderColor = c;
+    ch.data.datasets[0].backgroundColor = c + '16';
+    ch.options.plugins.tooltip.bodyColor = c;
+    ch.options.plugins.tooltip.titleColor = TICK;
+    ch.options.scales.x.ticks.color = TICK;
+    ch.options.scales.y.ticks.color = TICK;
+    ch.options.scales.y.grid.color = GRID;
+    ch.update('none');
+  });
+  document.getElementById('theme-toggle').textContent = dark ? 'Light' : 'Dark';
+}
+
 window.addEventListener('load', () => {
   refresh();
   ['s-a','s-e','s-p','s-s'].forEach(id => document.getElementById(id).addEventListener('input', refresh));
+
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark') applyTheme(true);
+
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const next = !isDark;
+    localStorage.setItem('theme', next ? 'dark' : 'light');
+    applyTheme(next);
+  });
 });
 </script>
 </body>
