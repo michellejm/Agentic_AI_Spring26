@@ -434,12 +434,14 @@ function simulate(a, p, e, s) {
 }
 
 function getScenarioKey(a, p, e, s) {
-  if (a >= 4 && p <= 2 && e >= 4) return 'disruption-unchecked';
+  if (a >= 4 && e >= 4 && p <= 2) return 'disruption-unchecked';
   if (a >= 4 && p >= 4) return 'managed-transition';
   if (a <= 2 && (p >= 4 || s >= 4)) return 'cautious-innovation';
   if (a <= 2 && p <= 2) return 'gradual-drift';
   if (a >= 4) return 'fast-fragmented';
-  if (e >= 4 && (p <= 2 || s <= 2)) return 'polarization-risk';
+  if (e >= 4) return 'polarization-risk';
+  if (p >= 4 && s >= 4) return 'managed-transition';
+  if (p <= 2 && s <= 2) return 'gradual-drift';
   return 'baseline-path';
 }
 
