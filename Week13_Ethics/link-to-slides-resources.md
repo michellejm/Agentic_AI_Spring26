@@ -2,3 +2,6 @@
 
 
 https://docs.google.com/document/d/1it9K6JDnDg6sAAKguIgCXdmajKcNDdwPwxmbJycb_rw/edit?tab=t.0
+
+
+https://drive.google.com/file/d/1jMaSTWQcvoJT_OWp2O0IGTCQ39FddkVQ/view
